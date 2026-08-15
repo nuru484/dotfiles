@@ -1,0 +1,6 @@
+# Backups install.sh makes when it replaces a pre-existing file
+*.pre-dotfiles
+
+# The global ignore (~/.config/git/ignore) excludes CLAUDE.md everywhere so it
+# stays out of project repos. Here it is the payload, so opt back in.
+!claude/CLAUDE.md
