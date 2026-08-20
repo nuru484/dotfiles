@@ -31,10 +31,13 @@ This skill is **architecture and structure only**. Defer:
 - **UI verification**: the user reviews the rendered UI themselves and requests
   adjustments - do not run dev servers or take screenshots to self-verify.
 
-**Write-time a11y floor (non-deferrable):** semantic elements over div soup,
-every input labelled, keyboard reachability and visible focus, alt text,
-touch targets ≥ 44px, respect `prefers-reduced-motion`. The audit skill
-catches what slips; it does not excuse skipping these while writing.
+**Write-time a11y + SEO floor (non-deferrable):** semantic elements over div
+soup, every input labelled, keyboard reachability and visible focus, alt
+text, WCAG AA contrast (4.5:1 body / 3:1 large + UI) in both themes, touch
+targets ≥ 44px, respect `prefers-reduced-motion`; public pages get metadata
++ canonical + sitemap entry, authed pages get noindex. Full recipes:
+`reference/a11y-seo.md` - read it before building any page or form. The
+audit skill catches what slips; it does not excuse skipping these while writing.
 
 **Precedence over the vercel-* skills:** when `vercel-react-best-practices`
 or `vercel-composition-patterns` suggest a different stack choice (SWR,
@@ -89,6 +92,11 @@ STATE & FORMS
 UX STATES
 [ ] Every query consumer handles isLoading / isError / empty (skeleton/error/empty)
 [ ] Mutations surface success + error via the shared toast/error-message helper
+
+A11Y & SEO (reference/a11y-seo.md)
+[ ] Landmarks + single h1; interactivity on real <button>/<a>; icon buttons labelled
+[ ] Form errors tied via aria-describedby; contrast AA in both themes
+[ ] Public page: metadata + canonical + sitemap; authed page: noindex
 
 HYGIENE & TYPES
 [ ] No console.* in shipped code (use a dev-only logger if needed)

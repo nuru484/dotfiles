@@ -146,7 +146,9 @@ integration breakage until the end.
 [ ] Auth edge cases: expired token mid-action, logout everywhere, deep links
 [ ] Domain invariants enforced in DB (constraints) AND tested
 [ ] Seeds allow a full demo: admin user + representative data
-[ ] Metadata/SEO on public pages; favicon + OG image; robots.txt + sitemap
+[ ] Metadata/SEO on public pages (title template, canonical, OG, JSON-LD where
+    a schema type fits); favicon + OG image; sitemap.ts + robots.ts; authed
+    routes noindexed (frontend-conventions reference/a11y-seo.md)
 [ ] Legal/utility pages if public users exist (privacy, terms, contact)
 [ ] security-hardening + observability self-audits run and passing
 [ ] CI green; deployed; /ready verified; smoke flow clicked through
