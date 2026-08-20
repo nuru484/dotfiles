@@ -108,7 +108,8 @@ ecosystem's current best practices.
 5. **Integrations** (payments, email, media) as their features demand.
 6. **Hardening pass**: `security-hardening` checklist, `observability`
    checklist, a11y/perf self-check (`web-design-guidelines`), motion
-   self-check against the `review-animations` bar.
+   self-check against the `review-animations` bar, and `design-taste`
+   pre-flight on every public marketing surface.
 7. **CI/CD + deploy** (`ci-cd`, `release-deploy`), smoke test in production.
 
 Commit at every milestone per `git-workflow`'s autonomous-build rule. Never

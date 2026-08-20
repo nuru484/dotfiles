@@ -23,7 +23,9 @@ document with minimal prompting:
 - **Craft** (vendored from [emilkowalski/skills](https://github.com/emilkowalski/skills),
   with house overrides): `emil-design-eng`, `animate`, `review-animations`,
   `improve-animations`, `find-animation-opportunities`, `animation-vocabulary`,
-  `apple-design`, `ask-sonner`, `pick-ui-library`, `prototype`, `animate-expo`
+  `apple-design`, `ask-sonner`, `pick-ui-library`, `prototype`, `animate-expo`;
+  plus `design-taste` (anti-slop defaults + marketing composition, adapted
+  from [Leonxlnx/taste-skill](https://github.com/leonxlnx/taste-skill), MIT)
 - **Ship**: `git-workflow`, `ci-cd`, `release-deploy`
 - **Meta**: `find-skills`
 

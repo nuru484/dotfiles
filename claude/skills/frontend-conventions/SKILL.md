@@ -18,7 +18,9 @@ legacy shortcuts (stray `console.*`, needless `"use client"`).
 ## Scope boundary - do NOT duplicate other skills
 This skill is **architecture and structure only**. Defer:
 - **Creative/visual direction** (look, typography, layout taste) → the
-  `frontend-design` plugin skill.
+  `frontend-design` plugin skill, constrained by `design-taste`'s
+  anti-default bans (palettes, fonts, layout tells - always on).
+- **Marketing/landing/public-page composition** → `design-taste`.
 - **Interaction feel & motion** (animations, easing, press/hover states,
   transitions) → `emil-design-eng`; building a specific animation → `animate`.
 - **Responsive structure & content hardening** → `mobile-first-ui` (always on).

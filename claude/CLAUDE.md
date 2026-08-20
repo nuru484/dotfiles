@@ -23,7 +23,10 @@ When loaded skills disagree, exactly one owner wins - do not blend:
   vendored third-party skills (vercel-*, emil-*) > plugin skills.
 - Domain owners: responsive structure/content hardening = mobile-first-ui;
   interaction feel & motion = emil-design-eng (and animate);
-  visual/creative direction = the frontend-design plugin;
+  anti-slop design defaults (palettes, fonts, layout tells) and
+  marketing-page composition = design-taste;
+  visual/creative direction = the frontend-design plugin, constrained by
+  design-taste's bans (a suggestion landing on a banned default loses);
   a11y/UX audit = web-design-guidelines; client data layer & frontend
   architecture = frontend-conventions; API shape = api-contracts;
   tests = tdd; commits/PRs = git-workflow.
