@@ -1,9 +1,11 @@
 ---
 name: vercel-composition-patterns
 description:
-  React composition patterns that scale. Use when refactoring components with
-  boolean prop proliferation, building flexible component libraries, or
-  designing reusable APIs. Triggers on tasks involving compound components,
+  React composition patterns that scale. Use when WRITING new React components
+  with shared/coordinated state, building UI features with several cooperating
+  parts (composers, dialogs-with-actions, editors), refactoring components with
+  boolean prop proliferation, building component libraries, or designing
+  reusable component APIs. Triggers on tasks involving compound components,
   render props, context providers, or component architecture. Includes React 19
   API changes.
 license: MIT
@@ -18,6 +20,38 @@ Composition patterns for building flexible, maintainable React components. Avoid
 boolean prop proliferation by using compound components, lifting state, and
 composing internals. These patterns make codebases easier for both humans and AI
 agents to work with as they scale.
+
+## House addenda (apply whenever using these patterns)
+
+- **`'use client'` boundary**: every pattern here (createContext, use(),
+  providers, refs) is client-side. Put the provider + parts in client
+  components at the smallest subtree that needs them; never import them into
+  Server Components and never lift a whole page to the client for one
+  compound widget (`frontend-conventions` rule 1).
+- **Null-guard hook**: contexts are created with `null` defaults, so consumers
+  use a guard hook, never bare `use(SomeContext)` destructuring:
+  ```tsx
+  export function useComposer() {
+    const ctx = use(ComposerContext)
+    if (ctx === null) throw new Error("useComposer must be used within <Composer.Provider>")
+    return ctx
+  }
+  ```
+  Bare destructuring fails strict TypeScript and crashes cryptically when a
+  part renders outside its provider.
+- **Memoize the context value**: `useMemo` the `{ state, actions, meta }`
+  object (and `useCallback` the actions) before passing it to the provider;
+  an inline object re-renders every consumer on every provider render.
+- **Boolean props are fine in moderation**: `disabled`, `isLoading`, `open`
+  are idiomatic. Reach for composition when TWO OR MORE behavior-switching
+  booleans gate different subtrees of the same component, not for every flag.
+- **Forms are not composer state**: form field state/validation belongs to
+  react-hook-form (`frontend-conventions`); these providers coordinate
+  non-form UI state, or wrap RHF's own `FormProvider`.
+- **React version gate**: `use()`, `<Context value>`-as-provider, and
+  ref-as-prop require React 19. On React 18, substitute `useContext`,
+  `<Context.Provider value>`, and `forwardRef` throughout, including in
+  sections 1-3 whose examples use React 19 syntax.
 
 ## When to Apply
 
@@ -82,8 +116,7 @@ Each rule file contains:
 - Brief explanation of why it matters
 - Incorrect code example with explanation
 - Correct code example with explanation
-- Additional context and references
 
-## Full Compiled Document
-
-For the complete guide with all rules expanded: `AGENTS.md`
+Read the individual rule files above; there is no compiled aggregate (the
+upstream AGENTS.md/README were removed here as duplicative build artifacts).
+Load only the rules relevant to the component at hand.

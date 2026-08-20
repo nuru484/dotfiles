@@ -12,7 +12,7 @@ description: >-
 # Database & Migration Conventions
 
 Pairs with `backend-conventions` (data *access*); this skill owns schema *design*
-and migration *safety*. Security of data (encryption, PII policy) → security skill.
+and migration *safety*. Security of data (encryption, PII policy) → `security-hardening`.
 
 ## Golden rule: migrations must be backward-compatible (expand → contract)
 
@@ -31,21 +31,21 @@ break the currently-running version.
 
 ```
 SCHEMA DESIGN
-[ ] Every model: id, createdAt (@default(now)), updatedAt (@updatedAt)
+[ ] Every model: id, createdAt @default(now()), updatedAt @updatedAt
 [ ] Mutable/business models have deletedAt DateTime? (soft delete)
 [ ] Relations set onDelete/onUpdate explicitly (no silent defaults)
-[ ] Enums (Prisma) for fixed sets — not free String columns
-[ ] Money: integer minor units OR Decimal + an explicit currency column — never Float
+[ ] Enums (Prisma) for fixed sets - not free String columns
+[ ] Money: integer minor units OR Decimal + an explicit currency column - never Float
 [ ] @unique / @@unique on natural keys and idempotency references
 [ ] Indexes on every FK and on columns used in WHERE/ORDER BY/filters
-[ ] No over-indexing (each index costs writes) — index real query paths only
+[ ] No over-indexing (each index costs writes) - index real query paths only
 
 MIGRATION SAFETY
 [ ] Change is backward-compatible (old code still runs against new schema)
 [ ] No column drop/rename/retype in the same release that stops using it
 [ ] New non-null column on a populated table has a default or a backfill plan
 [ ] Backfill is batched/idempotent (p-map / chunks), not one giant UPDATE
-[ ] Reviewed the generated SQL before applying (npx prisma migrate dev)
+[ ] Generated with --create-only, SQL reviewed, THEN applied
 [ ] Destructive steps gated behind a separate, later migration
 [ ] Unique/NOT NULL added only AFTER data is known clean (validate first)
 ```
@@ -67,8 +67,12 @@ MIGRATION SAFETY
 ## Migration workflow
 
 ```bash
-# Author + review SQL locally (inspect the generated migration before committing)
-npx prisma migrate dev --name descriptive_change
+# 1. Generate WITHOUT applying, so the SQL can actually be reviewed first
+npx prisma migrate dev --name descriptive_change --create-only
+# 2. Inspect prisma/migrations/<timestamp>_descriptive_change/migration.sql
+#    (locks? backward compatible? matches intent?) - edit here if needed
+# 3. Apply locally
+npx prisma migrate dev
 
 # CI/CD applies, never edits:
 npx prisma migrate deploy
@@ -77,14 +81,55 @@ npx prisma migrate deploy
 - One migration = one coherent change with a **descriptive name** (not `init`
   for the 12th time).
 - **Backfills** run as batched, idempotent scripts (use `p-map` for controlled
-  concurrency), re-runnable without double-applying — not inline in a migration
+  concurrency), re-runnable without double-applying - not inline in a migration
   for large tables.
 - Run `migrate deploy` **before** the new app boots (it's in the build/release
   step) so the schema is ready when traffic arrives.
-- Generated client output is committed/generated in `postinstall`; keep
-  `prisma generate` in the deploy pipeline.
+- The generated client is NOT committed: `prisma generate` runs in
+  `postinstall` and in the deploy pipeline, so the client always matches the
+  installed schema.
+- `migrate dev` needs a shadow database: on managed Postgres without CREATEDB
+  rights, set `shadowDatabaseUrl` in the datasource to a second database you
+  provision, or develop against local docker Postgres (preferred).
+
+## Lock safety on large/hot tables
+
+Plain DDL can take table locks that stall production traffic:
+
+- **Indexes on big tables**: `CREATE INDEX CONCURRENTLY` - which cannot run
+  inside a transaction, while Prisma applies each migration in one. Isolate it
+  in its own migration (via `--create-only`, edit the SQL) and check the
+  installed Prisma version's docs for the current transaction opt-out; if the
+  installed version has none, run the statement as a scripted release step
+  instead of a Prisma migration, then record it with `migrate resolve
+  --applied`. Small or new tables can index normally inside the migration.
+- **NOT NULL / CHECK on populated tables**: two steps - add the constraint
+  `NOT VALID` (instant), then `VALIDATE CONSTRAINT` in a later migration
+  (scans without blocking writes).
+- **Adding a column with a volatile default** rewrites the table on old
+  Postgres; on 11+ constant defaults are metadata-only - still verify the
+  generated SQL.
+
+## When a deployed migration fails
+
+`migrate deploy` failing mid-migration leaves it marked failed in
+`_prisma_migrations` and BLOCKS all future deploys until resolved. Do not
+edit applied migrations and never `migrate reset` against production.
+
+```bash
+npx prisma migrate status                       # see what's failed/pending
+# If the failed migration did NOT partially apply (or you rolled its effects back):
+npx prisma migrate resolve --rolled-back <migration_name>   # then fix + redeploy
+# If you completed its work manually and verified it:
+npx prisma migrate resolve --applied <migration_name>
+# Baselining an existing database that predates migrations:
+npx prisma migrate diff / migrate resolve --applied <initial_migration>
+```
+
+Diagnose why it failed (lock timeout? bad data for a new constraint?) before
+resolving; the resolve command only records state, it does not fix data.
 
 ## When unsure
 If a change can't be made backward-compatible in one step, split it into
-expand/backfill/contract migrations across releases and say so — don't ship a
+expand/backfill/contract migrations across releases and say so - don't ship a
 destructive one-shot.

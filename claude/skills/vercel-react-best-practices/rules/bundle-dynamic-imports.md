@@ -22,6 +22,8 @@ function CodePanel({ code }: { code: string }) {
 **Correct (Monaco loads on demand):**
 
 ```tsx
+'use client' // ssr: false is only allowed inside Client Components
+
 import dynamic from 'next/dynamic'
 
 const MonacoEditor = dynamic(
@@ -33,3 +35,7 @@ function CodePanel({ code }: { code: string }) {
   return <MonacoEditor value={code} />
 }
 ```
+
+In a Server Component tree, put this in a small client wrapper file (see
+bundle-defer-third-party for the pattern); `dynamic(..., { ssr: false })`
+directly in a Server Component is a build error.

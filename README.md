@@ -6,9 +6,22 @@ Personal machine config, kept in git so it stays identical across computers.
 
 | File | What it is |
 | --- | --- |
-| `CLAUDE.md` | Global instructions applied to every project |
+| `CLAUDE.md` | Global instructions + engineering standards applied to every project |
 | `settings.json` | Model, effort level, theme, permissions, enabled plugins |
-| `skills/` | Personal skills (backend/frontend conventions, git workflow, mobile-first UI, ...) |
+| `skills/` | Personal skills covering the full build lifecycle |
+
+The skills are designed to carry an end-to-end build from a system design
+document with minimal prompting:
+
+- **Plan**: `app-blueprint` (design doc -> PLAN.md, domain modeling, default decisions)
+- **Scaffold**: `project-scaffold` (canonical infra modules, bootstrap, local dev)
+- **Build**: `backend-conventions`, `frontend-conventions`, `api-contracts`,
+  `database-migrations`, `auth-conventions`, `saas-integrations`
+- **Quality**: `tdd` (test-first, default methodology), `mobile-first-ui`,
+  `web-design-guidelines`, `security-hardening`, `observability`,
+  `vercel-react-best-practices`, `vercel-composition-patterns` (vendored, with house overrides)
+- **Ship**: `git-workflow`, `ci-cd`, `release-deploy`
+- **Meta**: `find-skills`
 
 These are symlinked into `~/.claude/` rather than copied, so editing a skill
 here takes effect immediately and a `git pull` updates the other machine.

@@ -7,6 +7,13 @@ tags: client, swr, deduplication, data-fetching
 
 ## Use SWR for Automatic Deduplication
 
+> **House override:** in this user's stack the client data layer is RTK Query
+> (see `frontend-conventions`), which already provides the dedup, caching,
+> and revalidation this rule wants. Apply the PRINCIPLE (never raw
+> fetch/useEffect per component) through RTK Query endpoints; do not install
+> SWR alongside it. The SWR code below applies only to projects that don't
+> use RTK Query.
+
 SWR enables request deduplication, caching, and revalidation across component instances.
 
 **Incorrect (no deduplication, each instance fetches):**
@@ -35,17 +42,17 @@ function UserList() {
 **For immutable data:**
 
 ```tsx
-import { useImmutableSWR } from '@/lib/swr'
+import useSWRImmutable from 'swr/immutable'
 
 function StaticContent() {
-  const { data } = useImmutableSWR('/api/config', fetcher)
+  const { data } = useSWRImmutable('/api/config', fetcher)
 }
 ```
 
 **For mutations:**
 
 ```tsx
-import { useSWRMutation } from 'swr/mutation'
+import useSWRMutation from 'swr/mutation'
 
 function UpdateButton() {
   const { trigger } = useSWRMutation('/api/user', updateUser)

@@ -50,18 +50,30 @@ export default function Document() {
 }
 ```
 
-**Note:** In Next.js, prefer the `next/script` component with `strategy` prop instead of raw script tags:
+**Note:** In Next.js, prefer the `next/script` component with `strategy` prop instead of raw script tags. `beforeInteractive` scripts MUST live in the root layout (`app/layout.tsx`); placed in a page they error at runtime:
 
 ```tsx
+// app/layout.tsx - the only valid home for beforeInteractive
+import Script from 'next/script'
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Script src="/scripts/polyfill.js" strategy="beforeInteractive" />
+      </body>
+    </html>
+  )
+}
+```
+
+```tsx
+// any page/component - afterInteractive (default) and lazyOnload are fine here
 import Script from 'next/script'
 
 export default function Page() {
-  return (
-    <>
-      <Script src="https://example.com/analytics.js" strategy="afterInteractive" />
-      <Script src="/scripts/utils.js" strategy="beforeInteractive" />
-    </>
-  )
+  return <Script src="https://example.com/analytics.js" strategy="afterInteractive" />
 }
 ```
 

@@ -1,11 +1,11 @@
 ---
 name: mobile-first-ui
 description: >-
-  Mobile-first UI/UX principles for every frontend the user builds — ~90% of
+  Mobile-first UI/UX principles for every frontend the user builds - ~90% of
   real users are on phones, so the phone layout is the primary design, not an
   afterthought. Apply AUTOMATICALLY and ALWAYS on ANY frontend work: creating
   or modifying pages, components, lists/tables, cards, forms, modals,
-  toolbars, detail views, navigation, or styling — in any project, any stack.
+  toolbars, detail views, navigation, or styling - in any project, any stack.
   Also apply when reviewing UI. "Looks good on desktop" is never an excuse:
   if it degrades on a phone it is broken. Covers responsive structure and
   worst-case content hardening. The user checks the rendered UI themselves
@@ -16,57 +16,63 @@ description: >-
 # Mobile-First UI
 
 The 280px view (Galaxy Fold cover) is the primary design target; desktop is
-the enhancement. Never suggest "use desktop for the best experience" — users
+the enhancement. Never suggest "use desktop for the best experience" - users
 don't adapt to the app, the app adapts to them. These rules come from real
-post-deployment complaints; reference implementations are
-`~/repos/khadys-kitchen-frontend` (2026-07: toolbars, dual tables, row
-lists) and `~/repos/traveltrek/frontend` (2026-07: container-query shells,
-`DetailPageHeader`, `FilterBar`, `Money`, clamped comboboxes) — copy their
-patterns, don't rediscover them.
+post-deployment complaints. **Canonical implementations of the named
+components (CellText, dual tables, DateInput, adaptive display type, Money)
+live in [reference/components.md](reference/components.md) - copy them, don't
+rediscover them.** When on the user's own machine, the richest live examples
+are `~/repos/khadys-kitchen-frontend` and `~/repos/traveltrek/frontend` (if
+those paths exist); otherwise the reference file is the source of truth.
 
-## Definition of done (non-negotiables — check every one before "done")
+## Definition of done (non-negotiables - check every one before "done")
+
+Since self-rendering is banned (see Verification), "check" here means: reason
+through each item against the written code at the stated viewport and fix
+what fails on paper. Walk the checklist explicitly before calling UI work done.
 
 ```
-[ ] No document-level horizontal scroll at 280px, 375px, ~768px, desktop
+[ ] No document-level horizontal scroll possible at 280px, 375px, ~768px, desktop
+    (trace every fixed width, nowrap, and min-content stretch)
 [ ] Every component's mobile arrangement was DESIGNED, not inherited from wrap
 [ ] Max-length content in every field renders gracefully (see worst-case)
-[ ] Money/primary figures never truncate — secondary meta gives way
+[ ] Money/primary figures never truncate - secondary meta gives way
 [ ] Tables have a card/row-list view below md (never scroll-only)
-[ ] Dashboard content verified at 768/1024 WITH the sidebar open — that is
-    the default view; "hide the sidebar to read it" = broken
+[ ] Dashboard content reasoned through at 768/1024 WITH the sidebar open - that
+    is the default view; "hide the sidebar to read it" = broken
 [ ] Truncated/clamped text is reachable in full somewhere (detail page/tooltip)
 [ ] Data-table column widths follow the width-share rules below
 [ ] Zero user-authored text inside a Badge/pill anywhere in the change
 [ ] No row where free text and action buttons share the width below sm
 ```
 
-## Data-table column width rules (2026-08 Elektor Pro, user-mandated — apply to EVERY data table)
+## Data-table column width rules (2026-08 Elektor Pro, user-mandated - apply to EVERY data table)
 
 - Exactly ONE primary column per table is marked as the stretch column; it
-  claims **40% of the table width** (`w-2/5` th + `w-2/5 max-w-0` td) — **no
+  claims **40% of the table width** (`w-2/5` th + `w-2/5 max-w-0` td) - **no
   column may ever exceed 40%** of the table.
 - Inside the stretch cell, text truncates at **`max-w-[90%]`** of the column
-  (85% when an avatar sits beside it) — content uses the room available but
+  (85% when an avatar sits beside it) - content uses the room available but
   never runs to the column edge, and never forces horizontal scroll.
 - Secondary long-content columns get fixed caps via a shared `CellText`-style
   cell (block min-w-0 truncate + max-w + `title` tooltip). Bare `truncate`
-  in a td WITHOUT a width cap does nothing — the column stretches instead.
+  in a td WITHOUT a width cap does nothing - the column stretches instead.
 - Every truncated cell carries the full value in `title=` and the detail page.
 
 ## The badge rule (hard, user-mandated)
 
-Badges/pills are ONLY for short (~≤20 chars) system-generated enum values —
+Badges/pills are ONLY for short (~≤20 chars) system-generated enum values  - 
 statuses, "You", "No. 3". **User-authored text (names, groups, categories,
 portfolios, nicknames, titles) is NEVER rendered in a badge**, in tables,
 cards, chips, rails, or anywhere else. Free text gets plain typography with
 truncation or wrapping (`[overflow-wrap:anywhere]`). Multi-value user text
 (e.g. group memberships) renders as a plain list or comma-joined truncated
-line — not a chip row.
+line - not a chip row.
 
 ## No width competition on phone rows (hard, user-mandated)
 
 Below `sm`, free-form text and its action controls (edit/delete icons,
-buttons, selects) must NOT share a horizontal row — the controls squeeze the
+buttons, selects) must NOT share a horizontal row - the controls squeeze the
 text into a sliver. Stack them: text block first, actions on their own row
 above or below (`flex-col sm:flex-row`). Applies to list rows, card headers,
 criteria/setting rows, and page headers whose title can be long (title takes
@@ -76,13 +82,13 @@ the full width; buttons move to their own row).
 
 The #1 source of rework. In any layout with a persistent sidebar (admin
 dashboards), `md:`/`lg:` fire on the VIEWPORT while the sidebar eats
-~256px — so an iPad at 768px gets the "desktop" grid squeezed into 512px
+~256px - so an iPad at 768px gets the "desktop" grid squeezed into 512px
 of content. Anything inside the shell (grids, stat tiles, toolbars,
 detail columns, filter panels) must size by CONTAINER:
 - Make `<main>` a named container (`@container/main`) and use
   `@2xl/main:grid-cols-2`, `@4xl/main:grid-cols-4`, etc.
 - Self-contained cards (filter panels, sheets) get their own `@container`
-  and pair short fields 2-up via `@[280px]:grid-cols-2` — width thresholds
+  and pair short fields 2-up via `@[280px]:grid-cols-2` - width thresholds
   measure the CARD, so the same component works in a 375px sheet (sided)
   and on a fold (stacked) without media queries.
 - Viewport breakpoints remain correct only for viewport-anchored chrome
@@ -106,13 +112,13 @@ detail columns, filter panels) must size by CONTAINER:
   `min-w-0` + `break-all` (unbroken tokens) so they never make labels hang.
 - **The forgotten middle:** verify ~600–800px too, not just 280 and desktop.
 
-## Component patterns (implementations in khadys-kitchen-frontend)
+## Component patterns (implementations in reference/components.md)
 
 - **Tables → dual render.** Below `md`: dense card/row list showing ALL row
   data; from `md`: the real `<table>` (`hidden md:block`). One shared
-  `menuItemsFor()`. (`src/components/admin/table-bits.tsx`.)
+  `menuItemsFor()`. (Canonical code: reference/components.md.)
 - **List rows: two dense lines, messaging-app style.** Line 1: title
-  (truncate) + key figure right (`flex-none` — never truncates). Line 2:
+  (truncate) + key figure right (`flex-none` - never truncates). Line 2:
   meta (truncate) + compact badges. `py-2.5`, inline action menu, skeletons
   matching real density.
 - **Toolbars:** search always visible and full-width on phones; row 2 =
@@ -132,25 +138,25 @@ detail columns, filter panels) must size by CONTAINER:
   reserved (`min-h-[2.4em]`), descriptions `line-clamp-2 min-h-[3.2em]`,
   optional meta lines always rendered. Full text on the detail page +
   `title=` tooltip. **Never `flex-1` a line-clamped box** (stretching
-  repaints the hidden lines) — pin footers with `mt-auto`.
+  repaints the hidden lines) - pin footers with `mt-auto`.
 - **Badges are for predefined, short, enum-like values ONLY** (statuses:
   Published, Draft, Paid…). Never render admin-editable free text (item
-  names, custom categories) in a badge — long text in a pill looks bad at
+  names, custom categories) in a badge - long text in a pill looks bad at
   every screen size. Free text gets plain typography with truncation.
 - **Detail pages:** length-adaptive display type (`detailTitleCls`,
-  `statValueCls` in `src/components/admin/ui.tsx`) so 150-char names and
+  `statValueCls`, reference/components.md) so 150-char names and
   huge amounts render calmly; stat tiles 2-up from 360px; images full-width
   banner crop on phones (never a fixed thumb with dead space beside it);
   page titles `line-clamp-2` not `truncate`; a single leftover action
   renders as a button, not a one-item "More" menu.
-- **Forms:** native date inputs render blank on mobile — overlay a
+- **Forms:** native date inputs render blank on mobile - overlay a
   placeholder (`DateInput`). Inputs full-width; buttons wrap as whole pills
   (`flex-wrap` + `whitespace-nowrap`), never wrapping their label text.
   Pair short related fields (name+type, check-in+check-out, year+month)
   2-up via container query with a 1-col fold fallback. Number inputs must
   NOT clamp in `onChange` (`Math.max(1, parse(v)||1)` makes the field
-  impossible to clear) — hold the raw string, clamp on blur and on submit.
-- **Selects & comboboxes (shadcn):** `SelectTrigger` defaults to `w-fit` —
+  impossible to clear) - hold the raw string, clamp on blur and on submit.
+- **Selects & comboboxes (shadcn):** `SelectTrigger` defaults to `w-fit`  - 
   in forms always `w-full min-w-0`. The selected value must clamp to ONE
   line with the safe recipe below; a value taller than the fixed-height
   trigger gets flex-centered and PAINTS OVER content above and below it.
@@ -159,7 +165,7 @@ detail columns, filter panels) must size by CONTAINER:
   capped (`max-w-[min(92vw,26rem)]` or trigger width).
 - **Page/section headers:** one shared header component, never per-page
   copies (they drift). Right-side controls (back link, Filters) align to
-  the TITLE row only — never straddling title+description; if title and
+  the TITLE row only - never straddling title+description; if title and
   control can't share the row without wrapping, the control moves ABOVE
   the title (the mobile arrangement). Back controls are plain links
   (no border, no hover bg, underline on hover). Cap header + page width
@@ -170,12 +176,12 @@ detail columns, filter panels) must size by CONTAINER:
   keep x = y (`p-4 sm:p-6`).
 - **Compact money at scale:** amounts ≥ 1M render compact (₵24.5M) on
   cards/tables/tiles with the exact figure in a `title` tooltip and on the
-  detail view — 8-digit exact figures are what break tile layouts.
+  detail view - 8-digit exact figures are what break tile layouts.
 
 ## Mobile platform gotchas
 
 - Inputs need `font-size ≥ 16px` on mobile or iOS zooms the page on focus.
-- `100vh` is broken in mobile browsers — use `dvh`; safe-area insets
+- `100vh` is broken in mobile browsers - use `dvh`; safe-area insets
   (`env(safe-area-inset-*)`) on anything pinned to a screen edge.
 - Hover doesn't exist on touch: no hover-only reveals; give taps `active:`
   feedback.
@@ -189,18 +195,18 @@ detail columns, filter panels) must size by CONTAINER:
 Assume every field at its validation max (150-char names, 255-char UNBROKEN
 emails, 1000-char notes, max-int amounts):
 - **Standardize on `[overflow-wrap:anywhere]`** (or `break-all`) + `min-w-0`
-  for unbroken tokens — `overflow-wrap: break-word` (Tailwind `break-words`)
+  for unbroken tokens - `overflow-wrap: break-word` (Tailwind `break-words`)
   wraps visually but does NOT shrink min-content, so flex/grid ancestors
   still stretch past the viewport.
-- **Never combine `break-words` with `[overflow-wrap:anywhere]`** — they set
+- **Never combine `break-words` with `[overflow-wrap:anywhere]`** - they set
   the SAME property and whichever is later in the generated CSS wins, so
   `break-words` can silently disable `anywhere` and reintroduce the
   min-content stretch. One or the other, and it should be `anywhere`.
 - **The single-line-ellipsis trap:** `truncate` sets `nowrap`, which makes
-  the text's min-content its FULL width — in grid tracks, flex-col parents,
+  the text's min-content its FULL width - in grid tracks, flex-col parents,
   and buttons it stretches the whole form/track even with `min-w-0`. Safe
   single-line recipe: `min-w-0 line-clamp-1 whitespace-normal
-  [overflow-wrap:anywhere]` — one visual line with ellipsis, ~1-char
+  [overflow-wrap:anywhere]` - one visual line with ellipsis, ~1-char
   min-content. Plain `truncate` is only safe on flex-ROW items whose
   parent's width is already pinned.
 - `min-w-0` on any grid/flex item holding user text (automatic minimum size

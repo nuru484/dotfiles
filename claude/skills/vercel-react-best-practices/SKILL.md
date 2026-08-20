@@ -11,6 +11,26 @@ metadata:
 
 Comprehensive performance optimization guide for React and Next.js applications, maintained by Vercel. Contains 70 rules across 8 categories, prioritized by impact to guide automated refactoring and code generation.
 
+## House overrides (read first - these win over any rule below)
+
+This is a vendored third-party skill. In this user's stack, `frontend-conventions`
+and `backend-conventions` take precedence wherever they conflict:
+
+- **Client data layer is RTK Query**, not SWR. Apply `client-swr-dedup`'s
+  principle (no per-component fetch/useEffect) via RTK Query endpoints.
+- **No Server Actions, no DB access from Next.** `server-auth-actions`,
+  `server-cache-react`, and similar rules show Next.js touching a database;
+  in this stack every mutation goes through the Express `/api/v1` API. Apply
+  their principles (authenticate everything, per-request dedup) to API calls.
+- **Barrel files**: `bundle-barrel-imports` applies to the FRONTEND only; the
+  Express backend mandates per-feature barrels (no bundler cost there).
+- **Version preconditions**: `useEffectEvent` and `<Activity>` require
+  React 19.2+; `use()` / ref-as-prop require React 19. Check the project's
+  React version before applying `advanced-*`, `rendering-activity`, or
+  effect-event rules.
+- **js-*** micro-optimizations apply to measured hot paths (large lists,
+  loops over thousands of items), not to every map/filter in the codebase.
+
 ## When to Apply
 
 Reference these guidelines when:
@@ -127,7 +147,7 @@ Reference these guidelines when:
 - `advanced-effect-event-deps` - Don't put `useEffectEvent` results in effect deps
 - `advanced-event-handler-refs` - Store event handlers in refs
 - `advanced-init-once` - Initialize app once per app load
-- `advanced-use-latest` - useLatest for stable callback refs
+- `advanced-use-latest` - useEffectEvent for stable callback refs (React 19.2+)
 
 ## How to Use
 
@@ -144,6 +164,7 @@ Each rule file contains:
 - Correct code example with explanation
 - Additional context and references
 
-## Full Compiled Document
-
-For the complete guide with all rules expanded: `AGENTS.md`
+Read the individual rule files above; there is no compiled aggregate (the
+upstream AGENTS.md compile was removed here because it had drifted from the
+rules and dropped code blocks). Load only the sections relevant to the code
+at hand.

@@ -23,10 +23,10 @@ const result = await prisma.$transaction(async (tx) => {
 
 Rules:
 - Do **all** reads the decision depends on **inside** the same `tx`.
-- Use the `tx` client for every query in the block — never the global `prisma`.
+- Use the `tx` client for every query in the block - never the global `prisma`.
 - Throw typed errors inside the callback; a throw rolls the transaction back.
 
-## Pass `tx` to helpers — keep them pure and composable
+## Pass `tx` to helpers - keep them pure and composable
 
 A helper used inside a transaction takes the client as a parameter:
 
@@ -48,7 +48,7 @@ export const assertRequestAcceptsStock = async (
 };
 ```
 
-*Why:* the helper has no hidden dependency on a connection — it works in or out
+*Why:* the helper has no hidden dependency on a connection - it works in or out
 of a transaction and is trivial to test by passing a fake/`tx` client.
 
 `TransactionClient` (from `lib/prisma.ts`) preserves the soft-delete extension's
@@ -64,7 +64,7 @@ export type TransactionClient = Omit<
 ## Concurrency: atomic guarded `updateMany`, never read-then-write
 
 To decrement a shared quantity safely, put the guard in the `where` and check the
-affected row count — do not read the value, compute in JS, then write it back.
+affected row count - do not read the value, compute in JS, then write it back.
 
 ```ts
 const decremented = await tx.inKindDonation.updateMany({
@@ -77,7 +77,7 @@ const decremented = await tx.inKindDonation.updateMany({
 });
 
 if (decremented.count === 0) {
-  // Lost the race or insufficient stock — neither is a successful path.
+  // Lost the race or insufficient stock - neither is a successful path.
   throw new BadRequestError("Insufficient remaining stock for this allocation");
 }
 ```
@@ -88,16 +88,22 @@ decrement happen in one statement.
 
 ## Soft deletes
 
+Note on the examples above: they write `deletedAt: null` explicitly even
+though the extension already scopes predicate reads. That is deliberate
+defense-in-depth inside transactions (the invariant is visible at the call
+site); outside transactions, rely on the extension and keep `where` clauses
+clean. Pick one style per repo and stay consistent.
+
 - Mutable models carry `deletedAt: DateTime?`. "Delete" = set `deletedAt = new Date()`.
 - The Prisma extension (`lib/soft-delete-extension.ts`) auto-scopes predicate
   reads (`findMany/findFirst(OrThrow)/count/aggregate/groupBy`) to `deletedAt: null`.
-- `findUnique` is intentionally **not** scoped — it's the seam for finding a
+- `findUnique` is intentionally **not** scoped - it's the seam for finding a
   deleted row on purpose (reactivation, payment settlement, idempotency).
 - To include deleted rows explicitly, mention `deletedAt` in the `where` yourself;
   the extension respects an explicit predicate (opt-out / opt-in).
 
 ```ts
-// Normal read — deleted rows invisible automatically:
+// Normal read - deleted rows invisible automatically:
 await tx.donor.findMany({ where: { campaignId } });
 
 // Deliberate: settle/reactivate a soft-deleted row:
@@ -109,4 +115,4 @@ if (donor?.deletedAt) { /* reactivation is an explicit decision */ }
 
 - Generate a unique transaction/idempotency reference for each donation/payment.
 - On webhook/callback, look the record up with `findUnique` (the unscoped seam)
-  and no-op if already settled — a retried provider callback must not double-record.
+  and no-op if already settled - a retried provider callback must not double-record.

@@ -13,7 +13,7 @@ validations/donation/financial-donation-validation.ts  # Zod schemas
 types/donation/financial-donation.types.ts        # input + response types
 ```
 
-## Route — thin, auth at the router level
+## Route - thin, auth at the router level
 
 ```ts
 import { Router } from "express";
@@ -32,17 +32,20 @@ financialDonationRoutes.get("/", ...getAllFinancialDonations);
 export default financialDonationRoutes;
 ```
 
-## Controller — thin adapter, exports `RequestHandler[]`
+## Controller - thin adapter, exports `RequestHandler[]`
 
 ```ts
 const handleGetAll = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { data, total, page, limit, summary } = await listFinancialDonations(
-    req.query as unknown as IFinancialDonationQueryFilters,
-  );
+  // Safe ONLY because validationMiddleware.query(financialDonationQueryValidation)
+  // ran first and wrote the parsed result back to req.query; the assertion
+  // restates what the middleware guarantees. Never use this cast on
+  // unvalidated input.
+  const filters = req.query as unknown as IFinancialDonationQueryFilters;
+  const { data, total, page, limit, summary } = await listFinancialDonations(filters);
   res.status(HTTP_STATUS_CODES.OK).json({
     message: "Donations retrieved successfully",
     data,
-    meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    meta: buildMeta(total, page, limit), // shared helper - never inline Math.ceil
     summary,
   });
 });
@@ -59,7 +62,7 @@ Rules:
 - No Prisma, no `$transaction`, no Cloudinary, no domain branching here.
 - Always `asyncHandler` so thrown errors reach the central handler.
 
-## Service — pure, typed, framework-free
+## Service - pure, typed, framework-free
 
 ```ts
 // Shared relation selection defined ONCE; the return type derives from it.
@@ -91,7 +94,7 @@ Rules:
 - **Pure where possible**: inputs in → value out. No `req`, no globals beyond the
   imported `prisma`/`ENV`.
 - **Dependency-injectable I/O**: a function that runs inside a transaction takes
-  `tx: TransactionClient` as a parameter instead of importing the singleton — so
+  `tx: TransactionClient` as a parameter instead of importing the singleton - so
   it can be composed and tested. (See `transactions.md`.)
 - **Mutations take `actorId`** and stamp `createdById`/`updatedById`.
 - **Reads vs writes** split into `*.service.ts` and `*-query.service.ts`.
@@ -115,7 +118,7 @@ export const toDonationDTO = (d: DonationWithRelations): IDonationResponse => ({
 *Why:* internal columns (audit fields, soft-delete flags, FKs) stay internal;
 the response contract is explicit and stable.
 
-## Validation — Zod at the boundary
+## Validation - Zod at the boundary
 
 ```ts
 export const validateRequest =
@@ -123,7 +126,7 @@ export const validateRequest =
   (req: Request, _res: Response, next: NextFunction): void => {
     try {
       const parsed = schema.parse(req[target]);
-      // Express 5: req.query is a getter — redefine it; body/params are writable.
+      // Express 5: req.query is a getter - redefine it; body/params are writable.
       if (target === "query") {
         Object.defineProperty(req, "query", { value: parsed, writable: true, configurable: true, enumerable: true });
       } else {
@@ -144,6 +147,8 @@ export const validateRequest =
 ```
 
 Rules:
-- One validation library: **Zod**. Use `validationMiddleware.{create,update,query,custom}`.
+- One validation library: **Zod**. Use `validationMiddleware.{create,update,query,custom}` -
+  thin wrappers over `validateRequest` (create/update target `body`, query targets
+  `query`; canonical source in `project-scaffold` → `reference/backend-infra.md`).
 - The parsed (coerced) result is written back to `req`, so the handler reads typed
   values and the schema's inferred type doubles as the service input type.

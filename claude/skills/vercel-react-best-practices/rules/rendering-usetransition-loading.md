@@ -49,9 +49,15 @@ function SearchResults() {
     setQuery(value) // Update input immediately
     
     startTransition(async () => {
-      // Fetch and update results
       const data = await fetchResults(value)
-      setResults(data)
+      // State updates AFTER an await must be re-wrapped in startTransition
+      // to remain part of the transition (react.dev useTransition docs).
+      startTransition(() => {
+        // Guard against out-of-order responses: transitions do NOT abort
+        // in-flight fetches, so a stale slow response can land after a
+        // newer fast one. Ignore results for outdated queries.
+        setResults((prev) => (isCurrentQuery(value) ? data : prev))
+      })
     })
   }
 

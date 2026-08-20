@@ -43,8 +43,12 @@ function FilteredList({ items }: { items: Item[] }) {
 }
 
 function UserProfile() {
-  // JSON.parse runs only on initial render
+  // JSON.parse runs only on initial render.
+  // typeof window guard: client components ALSO render on the server in
+  // Next.js, where localStorage does not exist (see
+  // rendering-hydration-no-flicker for the flicker-free variant).
   const [settings, setSettings] = useState(() => {
+    if (typeof window === 'undefined') return {}
     const stored = localStorage.getItem('settings')
     return stored ? JSON.parse(stored) : {}
   })
@@ -53,6 +57,6 @@ function UserProfile() {
 }
 ```
 
-Use lazy initialization when computing initial values from localStorage/sessionStorage, building data structures (indexes, maps), reading from the DOM, or performing heavy transformations.
+Use lazy initialization when computing initial values from localStorage/sessionStorage, building data structures (indexes, maps), reading from the DOM, or performing heavy transformations. Browser-only APIs in initializers always need the environment guard shown above when the app server-renders.
 
 For simple primitives (`useState(0)`), direct references (`useState(props.value)`), or cheap literals (`useState({})`), the function form is unnecessary.

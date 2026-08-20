@@ -8,39 +8,49 @@ Read this before adding any endpoint, mutation, or touching auth/refresh.
 Mutex-guarded token refresh, and the tag registry. Everything else injects into it.
 
 ```ts
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import {
+  createApi,
+  fetchBaseQuery,
+  type BaseQueryFn,
+  type FetchArgs,
+  type FetchBaseQueryError,
+} from "@reduxjs/toolkit/query/react";
 import { Mutex } from "async-mutex";
+import { PUBLIC_ENV } from "@/lib/env"; // typed env module - never raw process.env
 import { userLoggedIn, userLoggedOut } from "./auth/auth-slice";
 import { apiSliceTags } from "../types/api";
+import type { IAuthRefreshResponse } from "@/types/auth.types";
 
 const mutex = new Mutex(); // single in-flight refresh, no stampede
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1`,
+  baseUrl: `${PUBLIC_ENV.SERVER_URI}/api/v1`,
   credentials: "include", // httpOnly auth cookies
 });
 
-const baseQueryWithReauth = async (args, api, extraOptions) => {
-  let result = await baseQuery(args, api, extraOptions);
-  if (result.error?.status === 401) {
-    if (!mutex.isLocked()) {
-      const release = await mutex.acquire();
-      try {
-        const refresh = await baseQuery({ url: "auth/refresh-token", method: "POST" }, api, extraOptions);
-        if (refresh.data) {
-          api.dispatch(userLoggedIn({ user: refresh.data.data }));
-          result = await baseQuery(args, api, extraOptions); // retry original
-        } else {
-          api.dispatch(userLoggedOut());
-        }
-      } finally { release(); }
-    } else {
-      await mutex.waitForUnlock();
-      result = await baseQuery(args, api, extraOptions); // retry after the refresh that won the lock
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> =
+  async (args, api, extraOptions) => {
+    let result = await baseQuery(args, api, extraOptions);
+    if (result.error?.status === 401) {
+      if (!mutex.isLocked()) {
+        const release = await mutex.acquire();
+        try {
+          const refresh = await baseQuery({ url: "auth/refresh-token", method: "POST" }, api, extraOptions);
+          if (refresh.data) {
+            const { data } = refresh.data as IAuthRefreshResponse; // { message, data: user }
+            api.dispatch(userLoggedIn({ user: data }));
+            result = await baseQuery(args, api, extraOptions); // retry original
+          } else {
+            api.dispatch(userLoggedOut());
+          }
+        } finally { release(); }
+      } else {
+        await mutex.waitForUnlock();
+        result = await baseQuery(args, api, extraOptions); // retry after the refresh that won the lock
+      }
     }
-  }
-  return result;
-};
+    return result;
+  };
 
 export const apiSlice = createApi({
   reducerPath: "api",
@@ -49,6 +59,11 @@ export const apiSlice = createApi({
   endpoints: () => ({}),
 });
 ```
+
+Store wiring (`configureStore` + `apiSlice.middleware` + `StoreProvider`
+placement in the root layout) is canonical in `project-scaffold` →
+`reference/frontend-infra.md`. RTK Query silently stops refetching and
+invalidating if the middleware is missing - copy the wiring, don't improvise.
 
 Rules:
 - Exactly **one** `createApi`. Never spin up a second.
@@ -64,24 +79,43 @@ import type { IDonationsResponse, IDonationQueryParams, IDonationResponse } from
 export const donationsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getDonations: builder.query<IDonationsResponse, IDonationQueryParams | void>({
-      query: (params) => ({ url: buildDonationsUrl(params), method: "GET" }),
-      providesTags: ["Donations"],
+      query: (params) => ({ url: buildDonationsUrl("/donations", params), method: "GET" }),
+      // id-level tags: lists invalidate precisely, detail pages stay cached
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.data.map(({ id }) => ({ type: "Donations" as const, id })),
+              { type: "Donations" as const, id: "LIST" },
+            ]
+          : [{ type: "Donations" as const, id: "LIST" }],
+    }),
+    getDonation: builder.query<IDonationResponse, string>({
+      query: (id) => ({ url: `/donations/${id}`, method: "GET" }),
+      providesTags: (_r, _e, id) => [{ type: "Donations", id }],
     }),
     createDonation: builder.mutation<IDonationResponse, ICreateDonationInput>({
       query: (body) => ({ url: "/donations", method: "POST", body }),
-      invalidatesTags: ["Donations", "DashboardStats"], // refresh dependent caches
+      invalidatesTags: [{ type: "Donations", id: "LIST" }, "DashboardStats"],
+    }),
+    updateDonation: builder.mutation<IDonationResponse, { id: string; body: IUpdateDonationInput }>({
+      query: ({ id, body }) => ({ url: `/donations/${id}`, method: "PATCH", body }),
+      // invalidate the one row AND the list (ordering/filters may change)
+      invalidatesTags: (_r, _e, { id }) => [{ type: "Donations", id }, { type: "Donations", id: "LIST" }],
     }),
   }),
 });
 
-export const { useGetDonationsQuery, useCreateDonationMutation } = donationsApi;
+export const { useGetDonationsQuery, useGetDonationQuery, useCreateDonationMutation, useUpdateDonationMutation } = donationsApi;
 ```
 
 Rules:
 - One `<feature>-api.ts` per resource; `injectEndpoints` keeps code-splitting clean.
 - **Queries declare `providesTags`; mutations declare `invalidatesTags`** for every
   cache they affect. A mutation that doesn't invalidate is a bug.
-- Request and response are typed from `types/` — never inline shapes.
+- **Use the id-level tag pattern above for every CRUD resource** (row tags +
+  a `"LIST"` tag). Bare list tags (`providesTags: ["Donations"]`) over-invalidate
+  every consumer on any mutation - acceptable only for tiny, rarely-mutated data.
+- Request and response are typed from `types/` - never inline shapes.
 
 ## Typed query-string builders
 
@@ -101,7 +135,7 @@ const buildDateRangeUrl = (basePath: string, params: IDashboardQueryParams | voi
 ## Consuming with required states
 
 ```ts
-const { data, isLoading, isError } = useGetDonationsQuery(params);
+const { data, isLoading, isError, refetch } = useGetDonationsQuery(params);
 
 if (isLoading) return <DonationsTableSkeleton />;
 if (isError) return <ErrorState onRetry={refetch} />;
@@ -111,7 +145,7 @@ return <DonationsTable rows={data.data} meta={data.meta} />;
 
 Rules:
 - Handle `isLoading` / `isError` / **empty** every time. Reuse `*Skeleton` components.
-- Don't copy RTK Query data into local `useState`/Redux — read the cache directly;
+- Don't copy RTK Query data into local `useState`/Redux - read the cache directly;
   derive with `useMemo` if needed.
 
 ## Error → message helper
@@ -121,7 +155,10 @@ Standardize RTK Query errors into a user-facing string + toast:
 ```ts
 export const extractApiErrorMessage = (error: unknown, fallback = "Something went wrong"): string => {
   if (error && typeof error === "object" && "data" in error) {
-    const data = (error as { data?: { message?: string } }).data;
+    const data = (error as { data?: { message?: string; details?: { field: string; message: string }[] } }).data;
+    // Validation errors carry per-field details (an array); surface the first one.
+    const fieldError = data?.details?.[0];
+    if (fieldError) return `${fieldError.field}: ${fieldError.message}`;
     if (data?.message) return data.message;
   }
   return fallback;

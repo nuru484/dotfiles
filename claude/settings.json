@@ -1,7 +1,6 @@
 {
   "permissions": {
-    "defaultMode": "bypassPermissions",
-    "skipDangerousModePermissionPrompt": true
+    "defaultMode": "bypassPermissions"
   },
   "model": "opus[1m]",
   "enabledPlugins": {
