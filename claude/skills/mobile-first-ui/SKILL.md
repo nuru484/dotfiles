@@ -221,6 +221,11 @@ reports a visual issue, fix it from their description.
 
 ## Scope boundary
 
-Responsive structure + content resilience only. Aesthetic
-direction → `frontend-design`; a11y/perf audit → `web-design-guidelines`;
+Responsive structure + content resilience only. Aesthetic direction → the
+`frontend-design` plugin; interaction feel, animations, easing/duration →
+`emil-design-eng` / `animate`; a11y/perf audit → `web-design-guidelines`;
 stack conventions (data layer, forms, files) → `frontend-conventions`.
+On any conflict with those skills about structure, widths, truncation, or
+responsive behavior, THIS skill's user-mandated rules win. The
+no-self-verification rule above also overrides any plugin skill that wants
+to launch dev servers or browser-verify UI.

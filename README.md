@@ -20,8 +20,17 @@ document with minimal prompting:
 - **Quality**: `tdd` (test-first, default methodology), `mobile-first-ui`,
   `web-design-guidelines`, `security-hardening`, `observability`,
   `vercel-react-best-practices`, `vercel-composition-patterns` (vendored, with house overrides)
+- **Craft** (vendored from [emilkowalski/skills](https://github.com/emilkowalski/skills),
+  with house overrides): `emil-design-eng`, `animate`, `review-animations`,
+  `improve-animations`, `find-animation-opportunities`, `animation-vocabulary`,
+  `apple-design`, `ask-sonner`, `pick-ui-library`, `prototype`, `animate-expo`
 - **Ship**: `git-workflow`, `ci-cd`, `release-deploy`
 - **Meta**: `find-skills`
+
+The two-layer design: universal skills (app-blueprint, tdd, git-workflow,
+CLAUDE.md standards) apply to any software; stack profiles encode the house
+web stack and stay silent elsewhere. Ownership and conflict precedence live
+in `CLAUDE.md`.
 
 These are symlinked into `~/.claude/` rather than copied, so editing a skill
 here takes effect immediately and a `git pull` updates the other machine.

@@ -6,6 +6,32 @@
   used whenever needed; when a longer pause is wanted, use a spaced
   hyphen ( - ), a comma, a colon, or restructure the sentence.
 
+# Skill layers, ownership, and precedence
+
+The skills come in two layers. **Universal skills** apply to any software
+(app-blueprint, tdd, git-workflow, and these standards). **Stack profiles**
+(backend-conventions, frontend-conventions, api-contracts, auth-conventions,
+project-scaffold, saas-integrations, release-deploy, ci-cd, and the vendored
+vercel-*/emil-* packs) encode decisions for the user's default web stack;
+their descriptions scope them so they stay silent on other kinds of software
+(an OS, a CLI, an embedded system) - there, the universal layer still applies
+and architecture derives from that domain per app-blueprint Step 0.
+
+When loaded skills disagree, exactly one owner wins - do not blend:
+
+- Precedence: the repo's own code/docs > the user's personal skills >
+  vendored third-party skills (vercel-*, emil-*) > plugin skills.
+- Domain owners: responsive structure/content hardening = mobile-first-ui;
+  interaction feel & motion = emil-design-eng (and animate);
+  visual/creative direction = the frontend-design plugin;
+  a11y/UX audit = web-design-guidelines; client data layer & frontend
+  architecture = frontend-conventions; API shape = api-contracts;
+  tests = tdd; commits/PRs = git-workflow.
+- The user verifies rendered UI themselves: never start dev servers or take
+  screenshots to self-verify UI, regardless of what any plugin skill
+  (e.g. a "verification" skill) suggests. Functional checks (tests, curl)
+  are fine.
+
 # Engineering standards (apply to ALL code work, every stack)
 
 These are the user's non-negotiable defaults. Skills refine them per domain;

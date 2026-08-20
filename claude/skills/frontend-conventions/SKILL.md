@@ -19,6 +19,8 @@ legacy shortcuts (stray `console.*`, needless `"use client"`).
 This skill is **architecture and structure only**. Defer:
 - **Creative/visual direction** (look, typography, layout taste) → the
   `frontend-design` plugin skill.
+- **Interaction feel & motion** (animations, easing, press/hover states,
+  transitions) → `emil-design-eng`; building a specific animation → `animate`.
 - **Responsive structure & content hardening** → `mobile-first-ui` (always on).
 - **A11y/perf audit** → `web-design-guidelines`; run its self-check after
   completing UI work, not only when asked.
