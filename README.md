@@ -7,8 +7,9 @@ Personal machine config, kept in git so it stays identical across computers.
 | File | What it is |
 | --- | --- |
 | `CLAUDE.md` | Global instructions + engineering standards applied to every project |
-| `settings.json` | Model, effort level, theme, permissions, enabled plugins |
+| `settings.json` | Model, effort level, theme, permissions, plugins, hooks |
 | `skills/` | Personal skills covering the full build lifecycle |
+| `hooks/` | Hook scripts (pre-commit quality gate) wired via settings.json |
 
 The skills are designed to carry an end-to-end build from a system design
 document with minimal prompting:
@@ -27,12 +28,30 @@ document with minimal prompting:
   plus `design-taste` (anti-slop defaults + marketing composition, adapted
   from [Leonxlnx/taste-skill](https://github.com/leonxlnx/taste-skill), MIT)
 - **Ship**: `git-workflow`, `ci-cd`, `release-deploy`
+- **Method** (vendored from [obra/superpowers](https://github.com/obra/superpowers), MIT):
+  `systematic-debugging` (root cause before fixes, always),
+  `verification-before-completion` (no success claims without fresh evidence)
 - **Meta**: `find-skills`
 
 The two-layer design: universal skills (app-blueprint, tdd, git-workflow,
-CLAUDE.md standards) apply to any software; stack profiles encode the house
-web stack and stay silent elsewhere. Ownership and conflict precedence live
-in `CLAUDE.md`.
+debugging/verification, CLAUDE.md standards - the latter also carrying
+Karpathy-derived rules on simplicity, surgical changes, and surfaced
+assumptions) apply to any software; stack profiles encode the house web
+stack and stay silent elsewhere. Ownership and conflict precedence live in
+`CLAUDE.md`. A commit-gate hook (`hooks/pre-commit-gate.sh`, wired in
+`settings.json`) mechanically blocks `git commit` while a repo's
+lint/typecheck/test scripts fail.
+
+### Vendored-skill upkeep
+
+Vendored packs and their upstreams: `vercel-*` (vercel-labs/agent-skills),
+`emil-*`/`animate*`/`apple-design`/`ask-sonner`/`pick-ui-library`/`prototype`
+(emilkowalski/skills), `design-taste` (adapted from Leonxlnx/taste-skill),
+`systematic-debugging` + `verification-before-completion` (obra/superpowers).
+To re-sync one: clone upstream, diff against the vendored copy, re-apply the
+house edits (each pack's SKILL.md header lists them), re-run the em-dash
+sweep. Occasionally run the skill-creator plugin's description-optimization
+evals on the always-on skills.
 
 These are symlinked into `~/.claude/` rather than copied, so editing a skill
 here takes effect immediately and a `git pull` updates the other machine.

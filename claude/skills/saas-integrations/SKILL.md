@@ -4,10 +4,13 @@ description: >-
   Provider integration playbook for the user's SaaS stack (Express 5 + TS ESM +
   Prisma + pg-boss backend, Next.js App Router frontend): payments and checkout
   (Paystack/Stripe), webhooks, transactional email (Resend + React Email), SMS,
-  file/image/media upload and storage (Cloudinary signed uploads), and background
-  jobs or scheduled tasks (pg-boss). Apply AUTOMATICALLY whenever implementing
-  payments, checkout, or webhooks, sending email or SMS, handling file, image, or
-  media upload or storage, or adding background jobs or scheduled tasks, in any app.
+  file/image/media upload and storage (Cloudinary signed uploads), background
+  jobs or scheduled tasks (pg-boss), and realtime or in-app notifications
+  (polling, SSE, socket.io). Apply AUTOMATICALLY whenever implementing
+  payments, checkout, subscriptions, or webhooks, sending email or SMS, handling
+  file, image, or media upload or storage, adding background jobs or scheduled
+  tasks, building data export/import (CSV) or account deletion, or adding
+  realtime updates, live feeds, or notification bells, in any app.
 ---
 
 # SaaS Integrations
@@ -26,10 +29,12 @@ design doc names a different provider.
 | Concern | Default provider | Rule |
 | --- | --- | --- |
 | Payments | **Paystack** when currency is GHS/NGN/ZAR/KES; **Stripe** otherwise | Keys from typed ENV; test keys in dev. See `reference/payments.md` |
+| Subscriptions | **Stripe Billing** on Stripe; **Paystack Plans + Subscriptions** on Paystack | Provider-managed, webhook-driven; NEVER hand-rolled renewal crons. See `reference/payments.md` |
 | Email | **Resend** + React Email templates | SMTP/nodemailer only when the design doc demands it. See `reference/email-jobs.md` |
 | SMS | Provider named in the design doc | Always wrap behind one `sms.service` so the provider is swappable |
 | Media | **Cloudinary** signed uploads | Client uploads direct to Cloudinary; API only signs. See `reference/media.md` |
 | Jobs/queue | **pg-boss** | Already the house queue; no Redis/BullMQ unless the doc says so |
+| Realtime / in-app notifications | **RTK Query polling** (15-30s); SSE only for sub-5s one-way; socket.io only for bidirectional | Notifications persist in the DB (source of truth). See `reference/realtime.md` |
 
 *Why:* Paystack covers mobile money and cards in the markets the user serves
 (often Ghana, GHS); Stripe covers the rest of the world; one queue and one
@@ -111,6 +116,44 @@ Every payment feature follows this exact sequence. Full code: `reference/payment
   error severity so they page someone instead of vanishing.
 - Full code: `reference/email-jobs.md`.
 
+## Data lifecycle rules (exports, imports, account deletion)
+
+- **Small exports** (<= ~10k rows, seconds of work): synchronous CSV stream
+  with `Content-Disposition: attachment`; the ONE sanctioned non-envelope
+  success response (recorded in api-contracts). **Large exports:** pg-boss job
+  + an ExportTask row; `POST` returns `202 { message, data: task }`, the
+  client polls. This Task-with-status pattern is THE house convention for ALL
+  long-running user-visible jobs (imports, report generation, bulk ops).
+- **Imports:** the file rides the existing signed-upload path (never through
+  `express.json`; the 100kb body cap is deliberate); a pg-boss job streams,
+  parses, validates each row against the SAME Zod schemas the API uses, and
+  stores a per-row error report on the task.
+- **CSV both directions:** RFC 4180 quoting, UTF-8 BOM for Excel, ISO dates,
+  money as decimal-plus-currency columns (exports are for people; the API and
+  DB stay integer minor units).
+- **Account deletion / PII erasure:** soft delete is for BUSINESS records;
+  personal data gets a real erasure path: grace period (default 14 days,
+  reversible), then a pg-boss job hard-scrubs through ONE erasure service.
+- Full code: `reference/data-lifecycle.md`.
+
+## Realtime & in-app notifications
+
+- **Decision ladder - escalate only when the spec demands it:** (1) DEFAULT:
+  RTK Query polling (`pollingInterval` 15-30s on the visible surface,
+  `skipPollingIfUnfocused`) for notification bells, dashboards, job status;
+  (2) SSE for one-way sub-5s feeds: normal `authenticateJWT` on the same
+  cookie, heartbeat every 25s, origin verified, exempt from the global rate
+  limiter, drained on SIGTERM; (3) socket.io ONLY for bidirectional (chat,
+  collaborative editing): handshake cookie auth + explicit origin check
+  (WS ignores CORS). Start single-instance; document the upgrade path.
+- **Fan-out: the DB is the source of truth.** A Notification model written
+  inside the domain transaction; SSE/sockets publish AFTER commit and only
+  nudge; polling and reconnects read the table. Mark-read is PATCH; list
+  responses carry `summary.unreadCount` per api-contracts.
+- The backend `notifications/` folder owns this surface: `notification.service.ts`,
+  `notification-query.service.ts`, routes + SSE route, `sse-registry.ts`.
+- Full code and the critical infra interactions: `reference/realtime.md`.
+
 ## Self-audit checklist - run against every integration change
 
 ```
@@ -122,6 +165,7 @@ PAYMENTS
 [ ] Amounts are integer minor units + currency column, everywhere (DB, API, provider)
 [ ] Client never sets amount; verify endpoint reads, never writes
 [ ] Reconciliation job exists for stuck PENDING payments
+[ ] Subscription access flips only on webhook-verified events (no renewal crons); entitlements via one requirePlan + PLAN_LIMITS
 
 EMAIL / SMS
 [ ] No inline provider calls in request handlers: enqueue a pg-boss job
@@ -140,17 +184,38 @@ JOBS
 [ ] Handlers idempotent under re-delivery
 [ ] retryLimit 3 + exponential backoff unless justified otherwise
 [ ] Handler logs jobId (+ requestId when present); failures logged loudly
+
+DATA LIFECYCLE
+[ ] Long-running export/import runs as a pg-boss job with a Task row (202 + poll), never in-request
+[ ] Import files ride the signed-upload path; rows validated with the same Zod schemas as the API
+[ ] CSV: RFC 4180 quoting, UTF-8 BOM, ISO dates, decimal money + currency column
+[ ] Account deletion: grace period, then the ONE erasure service hard-scrubs PII
+
+REALTIME
+[ ] Polling is the default; SSE/socket.io only where the spec demands the freshness
+[ ] Notification rows created inside the domain transaction; publish only after commit
+[ ] SSE: authenticateJWT on the stream, heartbeat, global-limiter exemption, SIGTERM drain
+[ ] socket.io: handshake cookie auth + origin check; single-instance constraint recorded
 ```
 
 ## Reference files
 
 - `reference/payments.md`: Paystack end to end (ENV, Prisma model, initialize,
-  webhook, settle, verify), Stripe variant, test-mode setup.
+  webhook, settle, verify), Stripe variant, subscriptions & recurring billing
+  (Stripe Billing / Paystack Plans, entitlements, dunning), test-mode setup.
 - `reference/email-jobs.md`: typed pg-boss queue, Resend handler, React Email
   templates, enqueueEmail helper, schedules, idempotency, worker registration.
 - `reference/media.md`: Cloudinary signature endpoint, RTK Query direct upload,
   Media model, delete lifecycle, next/image usage.
+- `reference/data-lifecycle.md`: CSV exports (sync stream + Task-with-status
+  jobs), imports with per-row error reports, CSV rules, account deletion &
+  PII erasure.
+- `reference/realtime.md`: the polling/SSE/socket.io decision ladder, the
+  Notification model and API contract, the notifications/ folder layout, SSE
+  route + registry with rate-limiter and graceful-shutdown interactions,
+  socket.io handshake auth and scale-out constraints.
 
-Read the relevant reference file BEFORE writing payment, email, media, or job
+Read the relevant reference file BEFORE writing payment, subscription, email,
+media, job, data-lifecycle (export/import/deletion), or realtime/notification
 code. If the design doc conflicts with a default here, the design doc wins;
 the flow laws (signatures, idempotency, minor units, queue for I/O) never bend.

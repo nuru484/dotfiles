@@ -89,6 +89,9 @@ Default decisions when the design doc is silent:
 | IDs | cuid/uuid strings, never sequential ints in URLs |
 | Money | Integer minor units + currency column (`database-migrations`) |
 | Timezones | Store UTC, render local |
+| In-app notifications | Notification table + RTK polling per `saas-integrations` realtime ladder |
+| i18n | None unless the spec demands it; then next-intl with a `[locale]` segment, hreflang per a11y-seo |
+| Receipts/printables | Print-styled route + `window.print`; server PDF via pg-boss job only when the spec demands archival files |
 
 If the thing being built is NOT a web app (a CLI, a library, a database
 engine, an ML pipeline), keep Step 0-2 and the standards below, drop the
@@ -152,9 +155,35 @@ integration breakage until the end.
     routes noindexed (frontend-conventions reference/a11y-seo.md)
 [ ] Legal/utility pages if public users exist (privacy, terms, contact)
 [ ] security-hardening + observability self-audits run and passing
+[ ] Project CLAUDE.md exists (domain summary, PLAN.md pointer, gate commands)
+[ ] README.md written (setup, run, test, deploy, seed admin credentials) and
+    an OPERATIONS section/runbook (rollback commands, backups, alerts, env
+    var table) sourced from ci-cd / release-deploy / observability
+[ ] Measured perf check: review next build's route-size table against a sane
+    budget; run Lighthouse on the key public page (or record why not)
 [ ] CI green; deployed; /ready verified; smoke flow clicked through
 [ ] PLAN.md assumptions section reviewed and surfaced to the user in summary
 ```
+
+## Resuming an existing build (a PLAN.md already exists)
+
+Long builds span sessions. A fresh session opening a half-built repo does
+NOT restart the intake; it re-enters:
+
+1. Read PLAN.md fully - especially `## Assumptions` and `## Milestones`.
+   Recorded assumptions are settled decisions; never silently re-decide one
+   (changing one is a deliberate act, recorded with the reason).
+2. Read `git log --oneline -20` and diff the plan against reality: which
+   milestones are actually done in code (trust the code over the checklist).
+3. Re-establish a green baseline: run the gate scripts (lint, typecheck,
+   test) before writing anything. A red baseline is fixed first (see
+   systematic-debugging), never built on.
+4. Update PLAN.md's milestone status to match reality, then continue from
+   the next unfinished slice using the same conventions the existing code
+   already follows (consistency protocol above).
+
+Never re-scaffold, re-generate, or rewrite finished slices because they
+"could be nicer"; surgical changes only (CLAUDE.md).
 
 ## When unsure
 

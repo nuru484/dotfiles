@@ -55,6 +55,16 @@ OVERRIDE aesthetic preference). If the read genuinely diverges two ways, ask
 ONE question; otherwise declare it and proceed (autonomous builds record it
 in PLAN.md per app-blueprint).
 
+A useful lens for the mode of a surface (what the visitor's success looks
+like): **Persuade** (landing/marketing/pricing - the visitor decides and
+acts), **Operate** (app UI - the visitor completes a task; scanability and
+consistency outrank expression), **Read** (docs/articles - comprehension
+first), **Experience** (portfolios/galleries - the work leads, the
+interface recedes). Pick the mode from the SURFACE, not the product: a
+tool's landing page is still Persuade; a fashion house's docs are still Read.
+Layer 2 governs Persuade/Read/Experience surfaces; Operate belongs to the
+house conventions.
+
 ## The three dials
 
 Set once per page from the design read; they gate layout, motion, and

@@ -7,8 +7,10 @@ description: >-
   changing, or reviewing login or register endpoints, JWT or token code,
   password hashing or password reset, sessions, refresh flows, logout, email
   verification, RBAC / roles / permissions, protecting pages or routes,
-  middleware.ts, auth cookies, or account lockout. Load this BEFORE designing
-  any auth feature so the decisions below are applied instead of re-invented.
+  middleware.ts, auth cookies, account lockout, or multi-tenancy
+  (organizations, workspaces, teams, member invitations). Load this BEFORE
+  designing any auth feature so the decisions below are applied instead of
+  re-invented.
 ---
 
 # Auth Conventions
@@ -26,6 +28,7 @@ instead of guessing, and a review flags any deviation.
 - See reference/tokens.md before writing ANY token code: issueAuthTokens, CookieManager, the RefreshToken Prisma model, refresh rotation with reuse detection, logout, authenticateJWT + authorize.
 - See reference/flows.md before register, login, password reset, or email verification: service sketches, Zod schema shapes, route wiring, typed pg-boss email queueing.
 - See reference/nextjs-protection.md before touching middleware.ts, protected pages, role-gated layouts, or any SSR call to the API.
+- See reference/tenancy.md the MOMENT the spec implies orgs, workspaces, or teams: blessed Organization/Membership/Invitation models, requireMembership, the orgId scoping law, invitation flow, platform-admin surface.
 
 ## Core defaults (state, do not debate)
 - Hash passwords with argon2id: memoryCost 19456 KiB, timeCost 2, parallelism 1. Why: OWASP-recommended parameters that survive GPU cracking at acceptable latency. Fall back to bcrypt cost 12 only when the argon2 native module cannot be installed.
@@ -46,6 +49,14 @@ instead of guessing, and a review flags any deviation.
 - Roles are a Prisma enum on User (e.g. USER, ADMIN); the role rides in the access token payload.
 - Route-level: `authorize(...roles)` middleware runs AFTER authenticateJWT and throws ForbiddenError. Why: authentication and authorization are different failures (401 vs 403) and stack in that order.
 - Ownership checks live in services (IDOR prevention): every query for a user-owned resource filters by the acting user (`where: { id, userId: actor.id }`) or fetches then verifies ownership and throws ForbiddenError. Never trust a client-supplied userId, ever, including "just for filtering". Why: route middleware cannot know who owns row 4783; only the service can.
+
+## Multi-tenancy (when the spec implies orgs/workspaces/teams)
+Single-tenant is the default (app-blueprint). The MOMENT a spec says teams, workspaces, organizations, or "invite members", reference/tenancy.md governs and its models are the blessed shape:
+- Two role systems with different jobs, never a fork: User.role stays ONLY for platform-level roles (PLATFORM_ADMIN for the SaaS owner's cross-tenant support surface, USER for everyone); per-org authority is Membership.role (MemberRole OWNER/ADMIN/MEMBER, @@unique([userId, orgId])). Never bolt org roles onto the global User.role enum.
+- The access token still carries userId + global role only. The active org is the /api/v1/orgs/:orgId/... path param (cacheable, loggable, impossible to forget), verified by requireMembership(role?), which loads the actor's Membership and throws ForbiddenError when absent.
+- THE SCOPING LAW: every tenant-owned model carries an indexed orgId; every service query filters by the membership-verified ctx.orgId (first param: ctx { orgId, actor }), never a client-supplied body value; delete/update use { id, orgId } compound wheres.
+- Invitations are hashed single-use tokens emailed via the typed queue ("email.org-invite"), accepted into a Membership in a transaction, with uniform responses (no member-email enumeration).
+- PLATFORM_ADMIN routes live under /api/v1/admin on a separate router, may query across orgs, and every access is audit-logged.
 
 ## Next.js protection
 - Protect pages with BOTH middleware.ts (fast redirect for unauthenticated users, with callbackUrl) AND server-side verification in layouts/pages via getSession(). Why: middleware sees only cookie presence and is bypassable; it is UX, not the security boundary.
@@ -84,5 +95,6 @@ Before finishing any auth work, verify every line:
 - [ ] Login and reset-request responses identical for existing vs unknown emails; register's duplicate-email ConflictError message stays generic.
 - [ ] Errors thrown as CustomError subclasses (UnauthorizedError, ForbiddenError, BadRequestError, ConflictError) from `#utils/errors.js` in services; success responses use `{ message, data }` with the safe user object directly at the data root on login, register, refresh-token, and /auth/me; the error envelope `{ status: "error", message, code?, details? }` comes from the central handler, never hand-built.
 - [ ] authorize(...) sits after authenticateJWT; services filter user-owned queries by the actor (no client-supplied userId trusted).
+- [ ] Multi-tenant work follows reference/tenancy.md: requireMembership on org routes, orgId filters from the verified ctx (never the body), compound { id, orgId } wheres on mutations, and a cross-tenant test (org B cannot touch org A) per tenant-owned feature.
 - [ ] Next.js: middleware.ts redirect AND server-side getSession() check both present; SSR API calls forward cookies(); no auth data in localStorage.
 - [ ] Rate limiting on auth endpoints delegated to the security-hardening skill, not re-implemented.

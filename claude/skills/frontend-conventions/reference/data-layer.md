@@ -56,6 +56,13 @@ export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithReauth,
   tagTypes: apiSliceTags,
+  // Both flags need setupListeners(store.dispatch) in the store wiring
+  // (project-scaffold) to fire; the flags without the listener do nothing.
+  refetchOnReconnect: true, // catch up after an offline gap
+  // Refetch when the tab regains focus. Disable it per hook where a
+  // background refetch could clobber in-progress edits or the query is
+  // expensive: useXQuery(args, { refetchOnFocus: false }).
+  refetchOnFocus: true,
   endpoints: () => ({}),
 });
 ```
@@ -174,3 +181,130 @@ try {
 ```
 
 *Why:* one consistent failure UX; matches the backend's `{ message }` error envelope.
+
+## Retry policy: queries may, mutations never
+
+- **Queries MAY auto-retry transient failures** (network drop, 5xx). Wrap the
+  base query once with RTK Query's `retry` helper, default OFF, and let query
+  endpoints opt in: max 2 retries, exponential backoff (the helper's default).
+  GET retries are safe because reads are idempotent; the cap keeps a hard
+  outage from turning into a request storm.
+- **Mutations NEVER auto-retry.** A timed-out mutation may have already been
+  applied server-side, so an automatic retry is a double-submit risk
+  (duplicate payments, duplicate rows). The user retries deliberately via the
+  error toast (`extractApiErrorMessage` pattern above). Never put
+  `maxRetries` on a mutation.
+
+```ts
+// redux/api-slice.ts: default OFF so mutations can never inherit retries
+import { retry } from "@reduxjs/toolkit/query/react";
+
+const baseQueryWithRetry = retry(baseQueryWithReauth, { maxRetries: 0 });
+
+export const apiSlice = createApi({ baseQuery: baseQueryWithRetry, /* ... */ });
+```
+
+```ts
+// a QUERY endpoint opts in; exponential backoff is built into the helper
+getNotifications: builder.query<INotificationsResponse, void>({
+  query: () => ({ url: "/notifications", method: "GET" }),
+  extraOptions: { maxRetries: 2 },
+  // ...
+}),
+```
+
+## Optimistic updates: pessimistic by default
+
+**Default is pessimistic:** the mutation settles, `invalidatesTags`
+refetches, and the UI updates from the server's truth. That is the right
+trade for almost everything.
+
+Optimistic updates (`onQueryStarted` + `updateQueryData` + `patch.undo()` on
+error + toast) are allowed ONLY for instant single-field toggles where the
+client can compute the entire next state locally: a status switch,
+favorite/unfavorite, read/unread. NEVER for money, anything that creates
+rows (ids and timestamps are server-derived), or any write whose response
+carries server-derived fields the UI needs.
+
+Canonical example - the mark-notification-read toggle:
+
+```ts
+// redux/notifications-api.ts (add "Notifications" to apiSliceTags first)
+markNotificationRead: builder.mutation<IApiResponse<null>, string>({ // 200 { message, data: null }
+  query: (id) => ({ url: `/notifications/${id}/read`, method: "PATCH" }),
+  async onQueryStarted(id, { dispatch, queryFulfilled }) {
+    // Patch the cached list. The second argument (undefined here) must match
+    // the cache key the consumer subscribed with; a parameterized query
+    // patches each affected cache key.
+    const patchResult = dispatch(
+      notificationsApi.util.updateQueryData("getNotifications", undefined, (draft) => {
+        const row = draft.data.find((n) => n.id === id);
+        if (row && !row.readAt) {
+          row.readAt = new Date().toISOString();
+          if (draft.summary) {
+            draft.summary.unreadCount = Math.max(0, draft.summary.unreadCount - 1);
+          }
+        }
+      }),
+    );
+    try {
+      await queryFulfilled;
+    } catch {
+      patchResult.undo(); // roll the cache back to the pre-toggle state
+      toast.error("Could not mark the notification as read");
+    }
+  },
+  // No invalidatesTags: an immediate refetch would defeat the optimism, and
+  // the notifications poll (below) reconciles with the server anyway.
+}),
+```
+
+## In-app notifications (bell + unread badge)
+
+The UI half of in-app notifications. The backend contract (Notification
+table, endpoints) and any SSE upgrade live in `saas-integrations`
+`reference/realtime.md` - read that for anything transport-side; nothing
+here duplicates it.
+
+- **Bell in the app shell header** (client island): icon button + unread
+  badge; the list opens as a dropdown on desktop and a bottom sheet on
+  phones per mobile-first-ui's modal/sheet rules.
+- **Data via a polled RTK Query query**, never a bespoke effect:
+
+```ts
+// consumer (bell component)
+const { data } = useGetNotificationsQuery(undefined, {
+  pollingInterval: 30_000, // the polling rung of the realtime ladder
+  skipPollingIfUnfocused: true, // background tabs stop hitting the API
+});
+const notifications = data?.data ?? [];
+const unreadCount = data?.summary?.unreadCount ?? 0;
+```
+
+- **unreadCount comes from the list envelope's `summary`**
+  (`IApiListResponse<INotification, { unreadCount: number }>`), not a second
+  endpoint and not a client-side count of the current page.
+- **Mark-read is the optimistic toggle above.** Mark-all-read follows the
+  same pattern: patch every row plus zero the summary, undo on error.
+- Badge caps at `9+`; the icon-only button carries a real `aria-label`
+  (a11y-seo rule):
+
+```tsx
+// components/notifications/notification-bell.tsx (trigger sketch)
+<Button
+  variant="ghost"
+  size="icon"
+  aria-label={`Notifications, ${unreadCount} unread`}
+  className="relative"
+>
+  <Bell aria-hidden="true" />
+  {unreadCount > 0 ? (
+    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground">
+      {unreadCount > 9 ? "9+" : unreadCount}
+    </span>
+  ) : null}
+</Button>
+```
+
+If the realtime ladder upgrades the transport (SSE), only the transport
+changes: the cache shape, the mark-read pattern, and this UI stay as-is.

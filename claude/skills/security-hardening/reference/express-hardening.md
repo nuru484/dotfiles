@@ -213,6 +213,9 @@ const rejectWith =
     next(new TooManyRequestsError(message, { layer: "RateLimit" }));
 
 // Blanket protection: generous enough for real users, hostile to scrapers.
+// Blessed exemption: a long-lived SSE stream route is skipped from this
+// window (one connection holds no request budget) and gets its own
+// connection-attempt bucket - see saas-integrations reference/realtime.md.
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 300, // 300 requests / 15 min per IP

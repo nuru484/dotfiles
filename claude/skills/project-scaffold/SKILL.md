@@ -80,6 +80,16 @@ prettier formats, eslint lints, never both jobs in one tool.
 Then copy the infrastructure modules from `reference/backend-infra.md` (map
 below) into the backend layout at the bottom of this file.
 
+**Every scaffolded repo also gets, in the same first commit:**
+- A project `CLAUDE.md` (auto-loaded by every future session): one-paragraph
+  domain summary, "PLAN.md is the source of truth for decisions and
+  assumptions - read it before working", the exact gate commands
+  (`npm run lint / typecheck / test`), and any project-specific blessed ways.
+  Why: PLAN.md is only read when something points at it; CLAUDE.md is the
+  one file the harness always loads, so it is the pointer.
+- A `README.md` skeleton (setup, run, test; deploy/ops sections filled in at
+  the end of the build per app-blueprint's completeness checklist).
+
 ## Frontend bootstrap (Next.js App Router + React 19)
 
 ```bash
@@ -134,6 +144,11 @@ lives in the listed reference section; read it before writing the file.
 | Feature api file (id-level tags) | `src/redux/<feature>-api.ts` | frontend-infra.md 6 |
 | extractApiErrorMessage | `src/utils/api-error.ts` | frontend-infra.md 7 |
 | Skeletons, EmptyState, ErrorState, toast wiring | `src/components/shared/` | frontend-infra.md 8 |
+| useOnlineStatus + OfflineBanner | `src/hooks/use-online-status.ts`, `src/components/shared/offline-banner.tsx` | frontend-infra.md 8 |
+| Error pages (not-found, error, global-error) | `src/app/not-found.tsx`, `error.tsx`, `global-error.tsx` | frontend-infra.md 9 |
+| WidgetErrorBoundary (dashboard widget containment) | `src/components/shared/widget-error-boundary.tsx` | frontend-infra.md 9 |
+| Sentry init (client/server/edge, inert when DSN unset) | `src/instrumentation-client.ts`, `src/instrumentation.ts`, `src/sentry.server.config.ts`, `src/sentry.edge.config.ts` | frontend-infra.md 9 |
+| useUpload + FileUpload (progress, cancel, retry) | `src/hooks/use-upload.ts`, `src/components/shared/file-upload.tsx` | saas-integrations reference/media.md |
 
 ## Local dev bootstrap (full detail: `reference/local-dev.md`)
 
@@ -178,14 +193,19 @@ Frontend (matches `frontend-conventions`; `@/` alias, kebab-case):
 
 ```
 src/
-  app/            routes, layout.tsx (StoreProvider + Toaster), page.tsx
+  app/            routes, layout.tsx (StoreProvider + Toaster), page.tsx,
+                  not-found.tsx, error.tsx, global-error.tsx
   components/
     ui/           shadcn primitives
     providers/    store-provider.tsx
-    shared/       skeletons.tsx, empty-state.tsx, error-state.tsx
+    shared/       skeletons.tsx, empty-state.tsx, error-state.tsx,
+                  offline-banner.tsx, widget-error-boundary.tsx,
+                  file-upload.tsx (when media uploads exist)
     <feature>/    data-table/, detail/, forms/
-  hooks/
+  hooks/          use-online-status.ts, use-upload.ts (when media uploads exist)
   lib/            env.ts, utils.ts (cn)
+  instrumentation.ts, instrumentation-client.ts, sentry.server.config.ts,
+  sentry.edge.config.ts (error tracking; frontend-infra.md 9)
   redux/          store.ts, hooks.ts, api-slice.ts, auth/auth-slice.ts,
                   <feature>-api.ts
   types/          api.ts, <feature>.types.ts

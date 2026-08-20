@@ -8,7 +8,7 @@ TARGET="$HOME/.claude"
 
 mkdir -p "$TARGET"
 
-for item in CLAUDE.md settings.json skills; do
+for item in CLAUDE.md settings.json skills hooks; do
   dest="$TARGET/$item"
 
   # Back up a real file/dir that is not already a link, so nothing is lost.
@@ -26,4 +26,4 @@ done
 
 echo
 echo "Done. Verify:"
-ls -la "$TARGET/CLAUDE.md" "$TARGET/settings.json" "$TARGET/skills"
+ls -la "$TARGET/CLAUDE.md" "$TARGET/settings.json" "$TARGET/skills" "$TARGET/hooks"

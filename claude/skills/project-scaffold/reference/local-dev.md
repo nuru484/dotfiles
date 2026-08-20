@@ -96,6 +96,10 @@ FRONTEND_URL=http://localhost:3000
 ```bash
 NEXT_PUBLIC_SERVER_URI=http://localhost:4000
 
+# error tracking (optional: Sentry stays inert when unset - see
+# project-scaffold reference/frontend-infra.md 9)
+NEXT_PUBLIC_SENTRY_DSN=
+
 # only when media uploads are used (Cloudinary; see saas-integrations)
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
 ```

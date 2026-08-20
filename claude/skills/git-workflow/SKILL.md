@@ -46,6 +46,12 @@ does); tooling credit doesn't belong in their history.
   fix) on the feature branch without asking, so the build has checkpoints
   and rollback points. Do not batch a whole build into one commit. Pushing
   still requires an explicit request or task instruction.
+- **Milestone commits require green gates.** Run the repo's own gate scripts
+  (lint, typecheck, test) and see them pass BEFORE committing - a commit
+  gate hook also enforces this mechanically and will block the commit
+  otherwise. Never satisfy the gate by deleting/skipping tests or weakening
+  lint rules; `CLAUDE_SKIP_COMMIT_GATE=1` exists for emergencies and is used
+  only with the user's explicit approval.
 
 ## Commit messages
 

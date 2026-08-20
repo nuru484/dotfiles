@@ -190,6 +190,21 @@ CONFIG & HYGIENE
   double-record.
 *Why:* traceable writes; safe retries against payment providers.
 
+### Cross-cutting patterns - see `reference/backend-patterns.md`
+- **Search**: list endpoints take the standard `search` query param; ladder =
+  ILIKE/contains → Postgres full-text (tsvector + GIN) → pg_trgm fuzzy, by table size/need.
+- **Caching**: default is NO cache; Postgres + indexes first, ETag only on hot
+  public GETs, Redis ONLY when the spec demands cross-instance state.
+- **Optimistic locking**: `version Int` + guarded `updateMany` → `ConflictError`
+  (`STALE_WRITE`), only where lost edits matter; counters keep the quantity pattern.
+- **Date-only values**: calendar dates are `@db.Date` + `yyyy-mm-dd` strings end
+  to end, never timestamps; local-time scheduling stores the IANA zone too.
+- **Audit log**: security-relevant actions append an `AuditLog` row inside the
+  same transaction as the action; append-only, no updates or deletes.
+- **API docs**: none by default (the Zod mirror is the contract); generate
+  OpenAPI from the backend Zod schemas only when third parties demand docs.
+*Why:* recurring decisions get one house answer instead of per-repo inventions.
+
 ### Observability & lifecycle
 - Attach a per-request `requestId` (header + every log line) alongside the
   existing `errorId`.

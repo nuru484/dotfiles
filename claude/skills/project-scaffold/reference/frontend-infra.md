@@ -15,7 +15,8 @@ Every file below that uses hooks or the store is a client component; the
 5. [redux/store.ts + hooks + StoreProvider + layout placement](#5-reduxstorets--hooks--storeprovider--layout-placement)
 6. [Example feature api file (id-level tags)](#6-example-feature-api-file-id-level-tags)
 7. [utils/api-error.ts (extractApiErrorMessage)](#7-utilsapi-errorts-extractapierrormessage)
-8. [Shared UI states: skeletons, empty, error, toasts](#8-shared-ui-states-skeletons-empty-error-toasts)
+8. [Shared UI states: skeletons, empty, error, offline, toasts](#8-shared-ui-states-skeletons-empty-error-offline-toasts)
+9. [Error containment & tracking](#9-error-containment--tracking)
 
 ---
 
@@ -34,6 +35,8 @@ const required = (name: string, value: string | undefined): string => {
 
 export const PUBLIC_ENV = {
   SERVER_URI: required("NEXT_PUBLIC_SERVER_URI", process.env.NEXT_PUBLIC_SERVER_URI),
+  /** OPTIONAL: error tracking stays inert when unset (section 9); dev needs no account. */
+  SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN ?? "",
 } as const;
 ```
 
@@ -207,6 +210,13 @@ export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithReauth,
   tagTypes: apiSliceTags,
+  // Both flags need setupListeners(store.dispatch) in redux/store.ts
+  // (section 5) to fire; the flags without the listener do nothing.
+  refetchOnReconnect: true, // catch up after an offline gap (OfflineBanner, section 8)
+  // Refetch when the tab regains focus. Disable it per hook where a
+  // background refetch could clobber in-progress edits or the query is
+  // expensive: useXQuery(args, { refetchOnFocus: false }).
+  refetchOnFocus: true,
   endpoints: () => ({}),
 });
 ```
@@ -234,7 +244,8 @@ export const makeStore = () => {
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().concat(apiSlice.middleware),
   });
-  // refetchOnFocus / refetchOnReconnect support
+  // Wires the focus/online listeners that drive the refetchOnFocus /
+  // refetchOnReconnect flags the api slice turns on (section 4).
   setupListeners(store.dispatch);
   return store;
 };
@@ -411,7 +422,7 @@ export const extractApiErrorMessage = (
 };
 ```
 
-## 8. Shared UI states: skeletons, empty, error, toasts
+## 8. Shared UI states: skeletons, empty, error, offline, toasts
 
 Every query consumer handles loading, error, and empty explicitly:
 
@@ -499,6 +510,61 @@ export function ErrorState({
 }
 ```
 
+### hooks/use-online-status.ts + components/shared/offline-banner.tsx
+
+Connectivity is a UI state too on the mobile networks these apps serve.
+`useOnlineStatus` subscribes to the browser's online/offline events;
+`OfflineBanner` shows a persistent notice while offline. The banner is UX
+only - the data layer's `refetchOnReconnect` (section 4) does the actual
+catch-up when the connection returns.
+
+```ts
+// hooks/use-online-status.ts
+"use client";
+
+import { useSyncExternalStore } from "react";
+
+const subscribe = (onChange: () => void) => {
+  window.addEventListener("online", onChange);
+  window.addEventListener("offline", onChange);
+  return () => {
+    window.removeEventListener("online", onChange);
+    window.removeEventListener("offline", onChange);
+  };
+};
+
+/** SSR-safe: the server snapshot says online, so hydration never flashes the banner. */
+export const useOnlineStatus = (): boolean =>
+  useSyncExternalStore(subscribe, () => navigator.onLine, () => true);
+```
+
+```tsx
+// components/shared/offline-banner.tsx
+"use client";
+
+import { useOnlineStatus } from "@/hooks/use-online-status";
+
+/** Mount once in the app shell (e.g. above {children} in the root layout). */
+export function OfflineBanner() {
+  const isOnline = useOnlineStatus();
+
+  return (
+    // The live region stays mounted so screen readers announce the change.
+    <div aria-live="polite" role="status">
+      {!isOnline ? (
+        <div className="bg-destructive px-4 py-2 text-center text-sm text-destructive-foreground">
+          You are offline - changes will not be saved
+        </div>
+      ) : null}
+    </div>
+  );
+}
+```
+
+`navigator.onLine` is a hint, not a guarantee (captive portals report
+online): treat the banner as advisory UX and keep real failures surfacing
+through the normal toast path.
+
 ### Toast wiring (sonner)
 
 `npx shadcn@latest add sonner` provides `components/ui/sonner`; mount its
@@ -516,3 +582,273 @@ try {
   toast.error(extractApiErrorMessage(err));
 }
 ```
+
+## 9. Error containment & tracking
+
+Three route-level error surfaces ship with EVERY app (the app-blueprint
+production checklist requires them), plus one widget-level boundary for
+dashboards, plus Sentry wiring so browser errors reach a tracker - the
+no-console rule removes the only other sink (see `observability`).
+
+### app/not-found.tsx
+
+Server Component; Next serves it with a real 404 status so crawlers never
+index error content as 200s (frontend-conventions a11y-seo).
+
+```tsx
+import Link from "next/link";
+
+export default function NotFound() {
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center">
+      <h1 className="text-2xl font-semibold">Page not found</h1>
+      <p className="text-sm text-muted-foreground">
+        The page you are looking for does not exist or has moved.
+      </p>
+      <Link href="/" className="underline underline-offset-4">
+        Go to the homepage
+      </Link>
+    </main>
+  );
+}
+```
+
+### app/error.tsx
+
+Route-segment error boundary: catches render/lifecycle errors below the root
+layout, reports them to Sentry, and offers retry. `reset()` re-renders the
+segment, which is often enough for transient data races.
+
+```tsx
+"use client";
+
+import * as Sentry from "@sentry/nextjs";
+import Link from "next/link";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+
+export default function ErrorPage({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    Sentry.captureException(error); // no-op when the DSN is unset
+  }, [error]);
+
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center">
+      <h1 className="text-2xl font-semibold">Something went wrong</h1>
+      <p className="text-sm text-muted-foreground">
+        An unexpected error occurred and has been reported.
+      </p>
+      <div className="flex flex-wrap justify-center gap-3">
+        <Button onClick={() => reset()}>Try again</Button>
+        <Button variant="outline" asChild>
+          <Link href="/">Go to the homepage</Link>
+        </Button>
+      </div>
+    </main>
+  );
+}
+```
+
+### app/global-error.tsx
+
+Catches errors in the ROOT layout itself. The app tree (Tailwind styles,
+fonts, providers) is dead at that point, so this file renders its own
+`<html><body>` with minimal inline styles and imports nothing from the app
+beyond Sentry.
+
+```tsx
+"use client";
+
+import * as Sentry from "@sentry/nextjs";
+import { useEffect } from "react";
+
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
+  return (
+    <html lang="en">
+      <body style={{ margin: 0, fontFamily: "system-ui, sans-serif" }}>
+        <main
+          style={{
+            minHeight: "100dvh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "12px",
+            padding: "24px",
+            textAlign: "center",
+          }}
+        >
+          <h1 style={{ fontSize: "20px", margin: 0 }}>Something went wrong</h1>
+          <p style={{ margin: 0, color: "#555" }}>
+            Please try again. If it keeps happening, reload the page.
+          </p>
+          <button
+            onClick={() => reset()}
+            style={{ padding: "8px 16px", font: "inherit", cursor: "pointer" }}
+          >
+            Try again
+          </button>
+        </main>
+      </body>
+    </html>
+  );
+}
+```
+
+### components/shared/widget-error-boundary.tsx
+
+`app/error.tsx` replaces the WHOLE route segment, so one crashing chart tile
+would blank an entire dashboard. Wrap each independent widget (chart tile,
+stat card cluster, activity feed) so it fails alone as a compact inline
+`ErrorState` with a retry.
+
+The rule: wrap independent dashboard widgets/chart tiles; do NOT wrap every
+component reflexively. The route-level error.tsx already contains page-level
+failures, and every extra boundary is one more state to design and test.
+
+React error boundaries have no hook equivalent, so this is the one
+sanctioned class component.
+
+```tsx
+"use client";
+
+import * as Sentry from "@sentry/nextjs";
+import { Component, Fragment, type ErrorInfo, type ReactNode } from "react";
+import { ErrorState } from "@/components/shared/error-state";
+
+interface WidgetErrorBoundaryProps {
+  children: ReactNode;
+  /** Names the widget in Sentry, e.g. "donations-by-month-chart". */
+  widget: string;
+}
+
+interface WidgetErrorBoundaryState {
+  hasError: boolean;
+  attempt: number;
+}
+
+export class WidgetErrorBoundary extends Component<
+  WidgetErrorBoundaryProps,
+  WidgetErrorBoundaryState
+> {
+  state: WidgetErrorBoundaryState = { hasError: false, attempt: 0 };
+
+  static getDerivedStateFromError(): Partial<WidgetErrorBoundaryState> {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    Sentry.captureException(error, {
+      extra: { widget: this.props.widget, componentStack: info.componentStack },
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <ErrorState
+          message="This section failed to load."
+          onRetry={() =>
+            this.setState((s) => ({ hasError: false, attempt: s.attempt + 1 }))
+          }
+        />
+      );
+    }
+    // Retry-by-remount: the changing key discards the crashed subtree's
+    // state instead of re-rendering it broken.
+    return <Fragment key={this.state.attempt}>{this.props.children}</Fragment>;
+  }
+}
+```
+
+```tsx
+// usage: each dashboard tile fails alone
+<WidgetErrorBoundary widget="donations-by-month">
+  <DonationsByMonthChart />
+</WidgetErrorBoundary>
+```
+
+### Sentry wiring (@sentry/nextjs, inert when unset)
+
+`npx @sentry/wizard@latest -i nextjs` works, but it adds source-map upload,
+a tunnel route, and example pages. Prefer the manual minimal setup below: it
+mirrors the backend tracker rule (inert when the DSN is unset, so dev needs
+no Sentry account - see `observability`) and keeps the config surface small.
+Add the wizard's extras (`withSentryConfig` + auth token for source maps)
+only when release debugging demands them.
+
+Steps: `npm i @sentry/nextjs` (check the version per the version rule), add
+the OPTIONAL `SENTRY_DSN` entry to `PUBLIC_ENV` (section 1) and
+`NEXT_PUBLIC_SENTRY_DSN` to `.env.local.example` (reference/local-dev.md),
+then create these files in `src/`:
+
+```ts
+// instrumentation-client.ts - browser init (the current @sentry/nextjs
+// convention; older docs call this file sentry.client.config.ts)
+import * as Sentry from "@sentry/nextjs";
+import { PUBLIC_ENV } from "@/lib/env";
+
+if (PUBLIC_ENV.SENTRY_DSN) {
+  Sentry.init({
+    dsn: PUBLIC_ENV.SENTRY_DSN,
+    tracesSampleRate: 0.1, // perf sampling bar from the observability skill
+    sendDefaultPii: false,
+    // No PII in events: scrub anything user-identifying before it leaves
+    // the browser. Extend as event shapes grow.
+    beforeSend(event) {
+      delete event.user;
+      if (event.request) delete event.request.cookies;
+      return event;
+    },
+  });
+}
+
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+```
+
+```ts
+// sentry.server.config.ts - same body for sentry.edge.config.ts
+import * as Sentry from "@sentry/nextjs";
+import { PUBLIC_ENV } from "@/lib/env";
+
+if (PUBLIC_ENV.SENTRY_DSN) {
+  Sentry.init({
+    dsn: PUBLIC_ENV.SENTRY_DSN,
+    tracesSampleRate: 0.1,
+    sendDefaultPii: false,
+  });
+}
+```
+
+```ts
+// instrumentation.ts - Next loads the server/edge configs through this hook
+import * as Sentry from "@sentry/nextjs";
+
+export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") await import("./sentry.server.config");
+  if (process.env.NEXT_RUNTIME === "edge") await import("./sentry.edge.config");
+}
+
+export const onRequestError = Sentry.captureRequestError;
+```
+
+One DSN (`NEXT_PUBLIC_SENTRY_DSN`) serves all three runtimes: a DSN is a
+public write-only key, and one env var keeps the inert-when-unset switch
+single. `beforeSend` scrubbing plus `sendDefaultPii: false` is the frontend
+mirror of the backend's log-redaction rule: no PII in events, ever.

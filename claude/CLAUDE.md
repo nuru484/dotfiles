@@ -29,7 +29,9 @@ When loaded skills disagree, exactly one owner wins - do not blend:
   design-taste's bans (a suggestion landing on a banned default loses);
   a11y/UX audit = web-design-guidelines; client data layer & frontend
   architecture = frontend-conventions; API shape = api-contracts;
-  tests = tdd; commits/PRs = git-workflow.
+  tests = tdd; commits/PRs = git-workflow;
+  diagnosing any bug/failure = systematic-debugging (root cause before
+  fixes, always); completion claims = verification-before-completion.
 - The user verifies rendered UI themselves: never start dev servers or take
   screenshots to self-verify UI, regardless of what any plugin skill
   (e.g. a "verification" skill) suggests. Functional checks (tests, curl)
@@ -71,6 +73,23 @@ nothing overrides them.
   independent I/O, memo only where measured); avoid premature micro-tuning,
   but never ship a known O(n^2) or waterfall when the linear/parallel form is
   the same effort.
+- **Simplicity first.** Minimum code that solves the problem: no features
+  beyond what was asked, no abstractions for single-use code, no unrequested
+  configurability, no error handling for impossible scenarios. If 200 lines
+  could be 50, rewrite. Ask: "would a senior engineer call this
+  overcomplicated?" (Karpathy-derived.)
+- **Surgical changes.** Every changed line traces to the request. Don't
+  "improve" adjacent code, comments, or formatting; don't refactor what isn't
+  broken; remove only the orphans YOUR change created. Pre-existing dead code
+  gets mentioned, not deleted. (Karpathy-derived.)
+- **Assumptions are surfaced, never silent.** Interactive: if interpretations
+  genuinely diverge, present them. Autonomous: take the convention-consistent
+  default and RECORD it (PLAN.md Assumptions per app-blueprint). Either way,
+  a silently-picked interpretation is a bug.
+- **Evidence before claims.** Never state that something passes, works, or is
+  fixed without having run the proving command in the current state (the
+  verification-before-completion skill is the standing rule; the commit gate
+  hook enforces it mechanically at commit time).
 - **Responsive UI is part of correctness.** Any web UI must be designed for
   all screen sizes (phone first, tablet, desktop; see mobile-first-ui). A
   layout that breaks at any common viewport is a bug, not a polish item.

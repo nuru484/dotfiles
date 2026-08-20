@@ -65,6 +65,8 @@ import { BadRequestError } from "#utils/errors.js";
 
 const ALLOWED_FOLDERS = ["avatars", "posts", "documents"] as const;
 const ALLOWED_FORMATS = "jpg,png,webp,pdf";
+// Repos with CSV import (data-lifecycle.md) extend this list and the MIME
+// mirror below with csv (resource_type "raw") for the imports folder only.
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB; also enforced by Cloudinary preset
 
 interface SignatureInput {
@@ -119,7 +121,11 @@ interface CreateMediaInput {
 
 export const createMedia = async (input: CreateMediaInput) => {
   // Trust check: confirm the asset really exists on our cloud before recording.
-  const resource = await cloudinary.api.resource(input.publicId);
+  // Media stores resourceType ("image" | "raw"); the API defaults to image,
+  // so raw assets (CSV imports, generated exports) 404 without it.
+  const resource = await cloudinary.api.resource(input.publicId, {
+    resource_type: input.resourceType ?? "image",
+  });
   return prisma.media.create({
     data: {
       publicId: input.publicId,
@@ -162,47 +168,418 @@ export const mediaApi = apiSlice.injectEndpoints({
 export const { useGetUploadSignatureMutation, useCreateMediaMutation } = mediaApi;
 ```
 
+Why XMLHttpRequest and not `fetch` for the Cloudinary POST: `fetch` cannot
+report upload progress, so on the flaky, low-bandwidth networks this file
+already designs for (see Rendering), a multi-MB upload is indistinguishable
+from a hang and users resubmit. `xhr.upload.onprogress` gives a real percent,
+`xhr.abort()` gives cancel. Every security property is unchanged: signed
+constrained params from our API, bytes go direct to Cloudinary, the server
+re-verifies in `createMedia` before recording.
+
 ```ts
 // frontend: hooks/use-upload.ts
-import { useCreateMediaMutation, useGetUploadSignatureMutation } from "@/redux/media-api";
+"use client";
 
-export const useUpload = () => {
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCreateMediaMutation,
+  useGetUploadSignatureMutation,
+} from "@/redux/media-api";
+import type { Media, UploadSignature } from "@/types/media.types";
+
+/**
+ * Client-side pre-validation MIRROR of the server constraints in
+ * upload-signature.service.ts (ALLOWED_FORMATS, MAX_BYTES) - keep in sync.
+ * Rejecting locally saves a signature round trip for a file Cloudinary would
+ * refuse anyway. This is UX only; the signed upload preset stays the
+ * security boundary.
+ */
+const ACCEPTED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+] as const;
+const MAX_BYTES = 10 * 1024 * 1024;
+
+/** Reuse signed params for retries while comfortably inside Cloudinary's ~1h window. */
+const SIGNATURE_REUSE_MS = 45 * 60 * 1000;
+
+export type UploadStatus = "queued" | "uploading" | "done" | "error" | "cancelled";
+
+export interface UploadItem {
+  id: string; // local queue id (crypto.randomUUID)
+  file: File;
+  /** Object URL for image previews (null for non-images). Revoked on unmount. */
+  previewUrl: string | null;
+  status: UploadStatus;
+  progress: number; // 0-100, driven by xhr.upload.onprogress
+  error: string | null;
+  media: Media | null; // set on success; media.publicId feeds form state
+}
+
+interface CloudinaryUploadResult {
+  public_id: string;
+  format: string;
+  width?: number;
+  height?: number;
+  bytes: number;
+}
+
+export const useUpload = (folder: string) => {
+  const [items, setItems] = useState<UploadItem[]>([]);
   const [getSignature] = useGetUploadSignatureMutation();
   const [createMedia] = useCreateMediaMutation();
 
-  return async (file: File, folder: string) => {
+  const itemsRef = useRef<UploadItem[]>([]);
+  const queueRef = useRef<UploadItem[]>([]);
+  const xhrsRef = useRef(new Map<string, XMLHttpRequest>());
+  const signatureRef = useRef<{ sig: UploadSignature; mintedAt: number } | null>(null);
+  const drainingRef = useRef(false);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  const patch = useCallback((id: string, changes: Partial<UploadItem>) => {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...changes } : it)));
+  }, []);
+
+  /** Retry-aware signature: reuse within the validity window, else re-sign. */
+  const freshSignature = useCallback(async (): Promise<UploadSignature> => {
+    const cached = signatureRef.current;
+    if (cached && Date.now() - cached.mintedAt < SIGNATURE_REUSE_MS) return cached.sig;
     const sig = await getSignature({ folder }).unwrap();
-    if (file.size > sig.maxBytes) throw new Error("File too large");
+    signatureRef.current = { sig, mintedAt: Date.now() };
+    return sig;
+  }, [folder, getSignature]);
 
-    const form = new FormData();
-    form.append("file", file);
-    form.append("api_key", sig.apiKey);
-    form.append("timestamp", String(sig.timestamp));
-    form.append("signature", sig.signature);
-    form.append("folder", sig.folder);
-    form.append("allowed_formats", sig.allowedFormats);
+  const postToCloudinary = useCallback(
+    (item: UploadItem, sig: UploadSignature) =>
+      new Promise<CloudinaryUploadResult>((resolve, reject) => {
+        const xhr = new XMLHttpRequest(); // fetch cannot report upload progress
+        xhrsRef.current.set(item.id, xhr);
+        const settle = () => xhrsRef.current.delete(item.id);
 
-    // Direct to Cloudinary: our API never sees the bytes.
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${sig.cloudName}/auto/upload`,
-      { method: "POST", body: form },
-    );
-    if (!res.ok) throw new Error("Upload failed");
-    const uploaded = (await res.json()) as {
-      public_id: string; format: string; width?: number; height?: number; bytes: number;
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            patch(item.id, { progress: Math.round((e.loaded / e.total) * 100) });
+          }
+        };
+        xhr.onload = () => {
+          settle();
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText) as CloudinaryUploadResult);
+          } else {
+            reject(new Error(`Upload rejected (${xhr.status})`));
+          }
+        };
+        xhr.onerror = () => {
+          settle();
+          reject(new Error("Network error during upload"));
+        };
+        xhr.onabort = () => {
+          settle();
+          reject(new DOMException("Upload cancelled", "AbortError"));
+        };
+
+        const form = new FormData();
+        form.append("file", item.file);
+        form.append("api_key", sig.apiKey);
+        form.append("timestamp", String(sig.timestamp));
+        form.append("signature", sig.signature);
+        form.append("folder", sig.folder);
+        form.append("allowed_formats", sig.allowedFormats);
+
+        // Direct to Cloudinary: our API never sees the bytes.
+        xhr.open("POST", `https://api.cloudinary.com/v1_1/${sig.cloudName}/auto/upload`);
+        xhr.send(form);
+      }),
+    [patch],
+  );
+
+  const runItem = useCallback(
+    async (item: UploadItem) => {
+      patch(item.id, { status: "uploading", progress: 0, error: null });
+      try {
+        const sig = await freshSignature();
+        const uploaded = await postToCloudinary(item, sig);
+        // Record it in our DB (server re-verifies against Cloudinary).
+        const media = await createMedia({
+          publicId: uploaded.public_id,
+          format: uploaded.format,
+          width: uploaded.width,
+          height: uploaded.height,
+          bytes: uploaded.bytes,
+        }).unwrap();
+        patch(item.id, { status: "done", progress: 100, media });
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          patch(item.id, { status: "cancelled", progress: 0 });
+        } else {
+          patch(item.id, {
+            status: "error",
+            error: err instanceof Error ? err.message : "Upload failed",
+          });
+        }
+      }
+    },
+    [createMedia, freshSignature, patch, postToCloudinary],
+  );
+
+  /**
+   * SEQUENTIAL by default: parallel uploads on a low-bandwidth link starve
+   * each other and all look stalled. For a context known to be fast (an
+   * internal admin tool), swap the loop for Promise.all over the queued items.
+   */
+  const drain = useCallback(async () => {
+    if (drainingRef.current) return;
+    drainingRef.current = true;
+    let next = queueRef.current.shift();
+    while (next) {
+      await runItem(next);
+      next = queueRef.current.shift();
+    }
+    drainingRef.current = false;
+  }, [runItem]);
+
+  const addFiles = useCallback(
+    (files: FileList | File[]) => {
+      const accepted: UploadItem[] = [];
+      const invalid: UploadItem[] = [];
+      for (const file of Array.from(files)) {
+        const item: UploadItem = {
+          id: crypto.randomUUID(),
+          file,
+          previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
+          status: "queued",
+          progress: 0,
+          error: null,
+          media: null,
+        };
+        // Pre-validate type/size BEFORE any signature request (server mirror).
+        if (!(ACCEPTED_MIME_TYPES as readonly string[]).includes(file.type)) {
+          invalid.push({ ...item, status: "error", error: "File type not allowed" });
+        } else if (file.size > MAX_BYTES) {
+          invalid.push({ ...item, status: "error", error: "File exceeds 10 MB" });
+        } else {
+          accepted.push(item);
+        }
+      }
+      setItems((prev) => [...prev, ...invalid, ...accepted]);
+      queueRef.current.push(...accepted);
+      void drain();
+    },
+    [drain],
+  );
+
+  /** AbortController-style cancel: abort the in-flight XHR, or unqueue. */
+  const cancel = useCallback(
+    (id: string) => {
+      const xhr = xhrsRef.current.get(id);
+      if (xhr) {
+        xhr.abort(); // onabort marks the item cancelled
+        return;
+      }
+      queueRef.current = queueRef.current.filter((it) => it.id !== id);
+      patch(id, { status: "cancelled" });
+    },
+    [patch],
+  );
+
+  /** Per-file retry; freshSignature decides whether to reuse or re-sign. */
+  const retry = useCallback(
+    (id: string) => {
+      const item = itemsRef.current.find((it) => it.id === id);
+      if (!item || (item.status !== "error" && item.status !== "cancelled")) return;
+      patch(id, { status: "queued", progress: 0, error: null });
+      queueRef.current.push(item);
+      void drain();
+    },
+    [drain, patch],
+  );
+
+  // Cleanup: abort in-flight uploads, revoke preview object URLs (they leak
+  // memory until revoked or the document unloads).
+  useEffect(() => {
+    const xhrs = xhrsRef.current;
+    return () => {
+      for (const xhr of xhrs.values()) xhr.abort();
+      for (const item of itemsRef.current) {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      }
     };
+  }, []);
 
-    // Record it in our DB (server re-verifies against Cloudinary).
-    return createMedia({
-      publicId: uploaded.public_id,
-      format: uploaded.format,
-      width: uploaded.width,
-      height: uploaded.height,
-      bytes: uploaded.bytes,
-    }).unwrap();
-  };
+  const isUploading = items.some(
+    (it) => it.status === "queued" || it.status === "uploading",
+  );
+
+  return { items, addFiles, cancel, retry, isUploading };
 };
 ```
+
+### FileUpload component
+
+Renders the queue: image preview (from the object URL), per-file progress
+bar, cancel while uploading, retry after failure. Generic, so it lives in
+`components/shared/`.
+
+```tsx
+// frontend: components/shared/file-upload.tsx
+"use client";
+
+import { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import type { UploadItem } from "@/hooks/use-upload";
+
+interface FileUploadProps {
+  items: UploadItem[];
+  onFiles: (files: FileList) => void;
+  onCancel: (id: string) => void;
+  onRetry: (id: string) => void;
+  accept?: string;
+  multiple?: boolean;
+}
+
+export function FileUpload({
+  items,
+  onFiles,
+  onCancel,
+  onRetry,
+  accept = "image/jpeg,image/png,image/webp,application/pdf",
+  multiple = true,
+}: FileUploadProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="space-y-3">
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        className="sr-only"
+        onChange={(e) => {
+          if (e.target.files?.length) onFiles(e.target.files);
+          e.target.value = ""; // allow re-selecting the same file
+        }}
+      />
+      <Button type="button" variant="outline" onClick={() => inputRef.current?.click()}>
+        Choose {multiple ? "files" : "file"}
+      </Button>
+
+      {items.length > 0 ? (
+        <ul className="space-y-2">
+          {items.map((item) => (
+            <li key={item.id} className="flex items-center gap-3 rounded-md border p-2">
+              {item.previewUrl ? (
+                // Local object URL: plain <img>; next/image loaders don't apply.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.previewUrl}
+                  alt=""
+                  className="h-10 w-10 flex-none rounded object-cover"
+                />
+              ) : (
+                <div className="h-10 w-10 flex-none rounded bg-muted" aria-hidden="true" />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="min-w-0 line-clamp-1 whitespace-normal [overflow-wrap:anywhere] text-sm">
+                  {item.file.name}
+                </p>
+                {item.status === "uploading" ? (
+                  <div
+                    role="progressbar"
+                    aria-valuenow={item.progress}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Uploading ${item.file.name}`}
+                    className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted"
+                  >
+                    <div
+                      className="h-full bg-primary transition-[width]"
+                      style={{ width: `${item.progress}%` }}
+                    />
+                  </div>
+                ) : null}
+                {item.status === "error" ? (
+                  <p className="text-xs text-destructive" role="alert">
+                    {item.error}
+                  </p>
+                ) : null}
+              </div>
+              {item.status === "queued" || item.status === "uploading" ? (
+                <Button type="button" variant="ghost" size="sm" onClick={() => onCancel(item.id)}>
+                  Cancel
+                </Button>
+              ) : null}
+              {item.status === "error" || item.status === "cancelled" ? (
+                <Button type="button" variant="ghost" size="sm" onClick={() => onRetry(item.id)}>
+                  Retry
+                </Button>
+              ) : null}
+              {item.status === "done" ? (
+                <span className="text-xs text-muted-foreground">Uploaded</span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+```
+
+### react-hook-form integration
+
+The upload feeds form state; the form never submits with an upload in flight.
+
+```tsx
+// frontend: inside the form component (react-hook-form + zodResolver)
+const form = useForm<PostFormValues>({ resolver: zodResolver(postFormSchema) });
+const { items, addFiles, cancel, retry, isUploading } = useUpload("posts");
+const [createPost, { isLoading: isSubmitting }] = useCreatePostMutation();
+
+// Upload completes -> publicId into form state (single-file field shown).
+useEffect(() => {
+  const done = items.find((it) => it.status === "done" && it.media);
+  if (done?.media) {
+    form.setValue("coverPublicId", done.media.publicId, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  }
+}, [items, form]);
+
+return (
+  <form onSubmit={onSubmit}>
+    {/* ...other fields... */}
+    <FileUpload
+      items={items}
+      onFiles={addFiles}
+      onCancel={cancel}
+      onRetry={retry}
+      multiple={false}
+    />
+    {/* Submit blocked while any upload is queued or in flight. */}
+    <Button type="submit" disabled={isUploading || isSubmitting}>
+      {isUploading ? "Uploading..." : "Publish"}
+    </Button>
+  </form>
+);
+```
+
+Rules:
+
+- The Zod schema requires the field (`coverPublicId: z.string().min(1,
+  "Upload an image")`), so an unfinished upload blocks submit through
+  validation as well as the disabled button.
+- Uploaded but form abandoned: the user uploads, `createMedia` records the
+  row, then they navigate away without submitting. Do NOT build client-side
+  "delete on unmount" cleanup - it fires on flaky navigations and races the
+  submit. The existing orphan-sweep job (Delete lifecycle below) handles
+  these orphans.
 
 ## Delete lifecycle
 
@@ -223,7 +600,9 @@ export const softDeleteMedia = async (input: { actorId: string; mediaId: string 
 export const hardDeleteMedia = async (input: { mediaId: string }) => {
   const media = await prisma.media.findUnique({ where: { id: input.mediaId } });
   if (!media) return; // idempotent
-  await cloudinary.uploader.destroy(media.publicId); // idempotent on Cloudinary side
+  await cloudinary.uploader.destroy(media.publicId, {
+    resource_type: media.resourceType ?? "image", // raw assets need it or destroy no-ops
+  }); // idempotent on Cloudinary side
   await prisma.media.delete({ where: { id: media.id } });
 };
 ```
@@ -233,7 +612,10 @@ export const hardDeleteMedia = async (input: { mediaId: string }) => {
 // 1. Media rows soft-deleted more than 30 days ago -> hardDeleteMedia (grace window over).
 // 2. Cloudinary assets in our folders with no Media row (upload succeeded but
 //    createMedia never ran) older than 24h -> uploader.destroy.
-// Both passes are idempotent, so re-delivery is safe.
+// 3. Media rows never attached to an owning entity (upload + createMedia ran,
+//    but the form was abandoned before submit) older than 24h ->
+//    softDeleteMedia; pass 1 hard-deletes them after the grace window.
+// All passes are idempotent, so re-delivery is safe.
 ```
 
 ## Rendering (Next.js, next/image)

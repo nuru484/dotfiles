@@ -379,6 +379,176 @@ res.sendStatus(200);
 
 `settlePayment`, `failPayment`, verify, and reconciliation are shared unchanged.
 
+## Subscriptions & recurring billing
+
+The law: **NEVER hand-roll renewal crons on top of the one-time flow.** No
+"charge saved cards nightly" job, no locally computed renewal dates driving
+charges. Subscription state is PROVIDER-MANAGED and WEBHOOK-DRIVEN: the
+provider schedules, charges, retries, and cancels; we mirror its events into
+one local row and gate features off that row. Access flips ONLY on
+webhook-verified events, never on the client redirect and never on our own
+timers.
+
+- **Stripe projects:** Stripe Billing (Products/Prices, Subscriptions, the
+  Customer Portal for card updates). Events to handle:
+  `customer.subscription.created`, `customer.subscription.updated`,
+  `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`.
+- **Paystack projects:** Paystack Plans + Subscriptions. Events to handle:
+  `subscription.create`, `invoice.create`, `invoice.payment_failed`,
+  `subscription.disable`. (The "no failure webhook" note in the webhook route
+  above applies to ONE-TIME card charges; subscription invoices DO emit
+  `invoice.payment_failed`.)
+
+The webhook plumbing is the SAME raw-body + signature + fast-200 pipeline
+above; subscription events are additional cases in the same route.
+
+### Local Subscription model sketch
+
+```prisma
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+model Subscription {
+  id                     String             @id @default(cuid())
+  orgId                  String             // or userId in single-user apps; one owner column, per the domain
+  provider               String             // "stripe" | "paystack"
+  providerSubscriptionId String             @unique   // join + idempotency key for events
+  planKey                String             // key into PLAN_LIMITS ("free" | "pro" | ...)
+  status                 SubscriptionStatus @default(TRIALING)
+  currentPeriodEnd       DateTime
+  cancelAtPeriodEnd      Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  deletedAt              DateTime?
+
+  @@index([orgId, status])
+}
+```
+
+### Event -> status transitions (idempotent)
+
+Same shape as `settlePayment`: `findUnique` by `providerSubscriptionId`,
+no-op when the event brings nothing new, transition otherwise. Re-delivered
+events converge to the same row.
+
+| Event (Stripe / Paystack) | Transition |
+| --- | --- |
+| `customer.subscription.created` / `subscription.create` | create or confirm the local row (`TRIALING` or `ACTIVE` per payload) |
+| `invoice.paid` or `customer.subscription.updated` / `invoice.create` (paid) | `-> ACTIVE`, advance `currentPeriodEnd` from the payload |
+| `invoice.payment_failed` / `invoice.payment_failed` | `-> PAST_DUE`, enqueue the dunning email |
+| `customer.subscription.deleted` / `subscription.disable` | `-> CANCELED` |
+
+```ts
+// services/subscriptions/apply-subscription-event.service.ts
+export const applySubscriptionEvent = async (input: {
+  providerSubscriptionId: string;
+  status: SubscriptionStatus;
+  currentPeriodEnd?: Date;
+  cancelAtPeriodEnd?: boolean;
+}) => {
+  const sub = await prisma.subscription.findUnique({
+    where: { providerSubscriptionId: input.providerSubscriptionId },
+  });
+  if (!sub) throw new NotFoundError(`Unknown subscription ${input.providerSubscriptionId}`);
+
+  // Idempotency: a re-delivered event that changes nothing is a no-op.
+  const samePeriod =
+    !input.currentPeriodEnd || sub.currentPeriodEnd >= input.currentPeriodEnd;
+  if (sub.status === input.status && samePeriod) return sub;
+
+  return prisma.subscription.update({
+    where: { id: sub.id },
+    data: {
+      status: input.status,
+      ...(input.currentPeriodEnd ? { currentPeriodEnd: input.currentPeriodEnd } : {}),
+      ...(input.cancelAtPeriodEnd === undefined
+        ? {}
+        : { cancelAtPeriodEnd: input.cancelAtPeriodEnd }),
+    },
+  });
+};
+```
+
+### Entitlements: one gate, one config object
+
+Plan knowledge lives in exactly TWO places: a `PLAN_LIMITS` config object and
+a `requirePlan` check in the SERVICE layer. Controllers, middleware, and the
+frontend never re-derive entitlements (the frontend may read the status for
+display; the service check is the enforcement).
+
+```ts
+// config/plan-limits.ts - THE single source of planKey -> limits/features
+export const PLAN_LIMITS = {
+  free: { maxProjects: 1, maxSeats: 2, features: [] },
+  pro: { maxProjects: 20, maxSeats: 10, features: ["exports", "api-access"] },
+} as const;
+export type PlanKey = keyof typeof PLAN_LIMITS;
+export type PlanFeature = (typeof PLAN_LIMITS)[PlanKey]["features"][number];
+```
+
+```ts
+// services/subscriptions/require-plan.service.ts - THE one entitlement gate
+const GRACE_DAYS = 7; // PAST_DUE keeps read access; writes blocked after this
+
+const withinGrace = (sub: { status: SubscriptionStatus; currentPeriodEnd: Date }) =>
+  sub.status === "PAST_DUE" &&
+  Date.now() < sub.currentPeriodEnd.getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000;
+
+export const requirePlan = async (orgId: string, feature: PlanFeature): Promise<void> => {
+  // Newest row wins: an old CANCELED subscription must never shadow a new
+  // ACTIVE one (or enforce one row per org with @@unique([orgId])).
+  const sub = await prisma.subscription.findFirst({
+    where: { orgId },
+    orderBy: { createdAt: "desc" },
+  });
+  const entitled =
+    sub && (sub.status === "ACTIVE" || sub.status === "TRIALING" || withinGrace(sub));
+  const planKey: PlanKey = entitled ? (sub.planKey as PlanKey) : "free";
+  const features: readonly string[] = PLAN_LIMITS[planKey].features;
+  if (!features.includes(feature)) {
+    throw new ForbiddenError("Your plan does not include this feature", {
+      code: "PLAN_REQUIRED", // in the api-contracts error-code catalog
+      context: { orgId, feature, planKey },
+    });
+  }
+};
+```
+
+Numeric limits use the same object: read `PLAN_LIMITS[planKey].maxProjects`
+and compare against a `count()` inside the service performing the action.
+
+### Grace and downgrade rules
+
+- **PAST_DUE grace:** the org keeps READ access; write/feature access (the
+  `requirePlan` and limit checks above) is blocked after `GRACE_DAYS` past
+  `currentPeriodEnd`. Default 7 days; the design doc may override.
+- **Downgrade rule:** limits are enforced on the NEXT action, never by
+  destructive auto-pruning. An org with 20 projects downgrading to a
+  1-project plan keeps its data and read access; it cannot create another
+  project until under the limit. Never auto-delete or auto-archive records to
+  fit a smaller plan.
+
+### Dunning (payment failure handling)
+
+The PROVIDER owns billing retries (Stripe Smart Retries, Paystack's retry
+schedule). Do not build charge-retry or provider-side dunning machinery. Our
+whole job on `invoice.payment_failed`:
+
+1. transition the row to `PAST_DUE` (webhook handler above),
+2. enqueue a "payment failed" email through the typed queue
+   (`"email.subscription-payment-failed"` in `JobPayloads`), and
+3. let the frontend render a status banner from the subscription status it
+   already fetches.
+
+Recovery is also provider-signaled: a later `invoice.paid` /
+`invoice.create` flips the row back to `ACTIVE`; cancellation after
+exhausted retries arrives as `customer.subscription.deleted` /
+`subscription.disable`.
+
 ## Test mode
 
 - **Paystack:** use `sk_test_...` in dev/staging ENV. Test cards from the

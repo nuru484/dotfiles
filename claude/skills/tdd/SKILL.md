@@ -54,8 +54,9 @@ everything, so order by risk.
 
 **Always-test floor (non-negotiable even under time pressure):** money math
 and rounding, auth and permission checks (including the denied paths),
-domain invariants and state-machine transitions (including illegal ones),
-idempotency (webhooks, retries), and validation rejections. Happy-path-only
+tenant isolation (org B cannot touch org A), domain invariants and
+state-machine transitions (including illegal ones), idempotency (webhooks,
+retries), and validation rejections. Happy-path-only
 test suites are not acceptable for production work.
 
 **Working from an approved spec or in an autonomous build:** do NOT pause

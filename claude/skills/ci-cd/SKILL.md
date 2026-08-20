@@ -132,3 +132,17 @@ SAFETY
 [ ] Rollback path known per platform; migrations are expand/contract
 [ ] Post-deploy: /health + /ready + smoke run + error-tracker watch
 ```
+
+## Dependency maintenance (post-launch)
+
+A later "update the dependencies" session follows this, never bulk-bumps:
+
+- Routine: `npm outdated` -> patch/minor bumps in one branch, gates green,
+  merge. `npm audit` findings at high/critical are fixed in the same pass.
+- Majors (Prisma, Next, Express, React): ONE major per branch. Read the
+  release notes/changelog first, run the official codemods where provided,
+  then full gates + the smoke flow before merging. Never stack two majors
+  in one change; never dodge a major indefinitely (schedule it).
+- Optional automation: a Dependabot config (weekly, grouped
+  minor/patch, majors as individual PRs) - add it when the repo is expected
+  to live for months; the commit gate and CI make its PRs safe to merge.

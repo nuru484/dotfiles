@@ -124,6 +124,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 ```
 
+Locales: when the app has locales (default is none - see app-blueprint's
+decision table), every public page declares `alternates.languages` (hreflang)
+alongside the canonical, and `app/sitemap.ts` emits per-locale entries.
+
 ### The route files every public site ships
 
 - `app/sitemap.ts`: static routes + dynamic entries queried from the API/DB

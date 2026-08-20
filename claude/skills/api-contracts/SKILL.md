@@ -29,6 +29,7 @@ SHAPE
 [ ] Success envelope: { message, data }  (lists add meta + optional summary)
 [ ] List meta: { total, page, limit, totalPages }
 [ ] Error envelope: { status: "error", message, code?, details? }
+[ ] Non-envelope success ONLY for sanctioned file streams (see File responses)
 [ ] Field names, casing, and nullability identical on both ends
 [ ] Wire formats followed: dates = ISO strings, money = integer minor units + currency
 
@@ -71,6 +72,19 @@ present. The success envelope deliberately has NO `status` discriminator:
 clients branch on HTTP status (RTK Query does this natively). Don't "fix" the
 asymmetry by adding `status: "success"`.
 
+## File responses & long-running work (the two sanctioned shape notes)
+
+- **File responses:** a synchronous export stream (`text/csv` with
+  `Content-Disposition: attachment`) is THE one sanctioned non-envelope
+  success response. The JSON list cap on `limit` does not apply to export
+  streams. Everything else stays in the envelope.
+- **Long-running work** (large exports, imports, report generation, bulk
+  ops): `POST` responds `202 { message, data: task }` where the task carries
+  `status: "PENDING" | "RUNNING" | "DONE" | "FAILED"` and `progress` (0-100);
+  the client then polls the task's GET endpoint (e.g. `GET /exports/:id`),
+  which returns the normal envelope. Full pattern: saas-integrations
+  `reference/data-lifecycle.md`.
+
 ## Wire formats (the #1 real-world drift source)
 JSON has no Date, Decimal, or BigInt; define how they cross the wire ONCE:
 - **Dates/times**: ISO 8601 UTC strings (`2026-08-20T14:00:00.000Z`).
@@ -90,6 +104,8 @@ JSON has no Date, Decimal, or BigInt; define how they cross the wire ONCE:
 ## Pagination, filtering, sorting
 - Standard query params: `page` (1-based), `limit` (validated + capped, e.g. ≤ 100),
   `sort` (`field:asc|desc`), plus typed domain filters.
+- `search` (optional free text) is the standard param name for list search; the
+  backend implementation ladder lives in backend-conventions `reference/backend-patterns.md`.
 - The **server validates and coerces** these with Zod (`validateRequest(schema, "query")`)
   and the **frontend builds them with a typed URL helper** - the two must use the
   same param names. Never accept an unbounded `limit`.
@@ -117,7 +133,9 @@ test into CI (see `ci-cd`) so a one-sided change fails the build.
 ## Error code catalog
 Use stable, machine-readable `code`s (not just prose messages) so the frontend can
 branch: `VALIDATION_ERROR`, `NOT_FOUND`, `UNAUTHORIZED`, `FORBIDDEN`, `CONFLICT`,
-`RATE_LIMITED`, `MISSING_TOKEN`, `TOKEN_EXPIRED`. Map them from the backend's typed
+`RATE_LIMITED`, `MISSING_TOKEN`, `TOKEN_EXPIRED`, `STALE_WRITE` (optimistic-lock
+conflict; see backend-conventions `reference/backend-patterns.md`), `PLAN_REQUIRED`
+(subscription entitlement gate). Map them from the backend's typed
 error subclasses; extend the catalog in one place.
 
 ## When unsure

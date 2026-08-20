@@ -46,6 +46,24 @@ or `vercel-composition-patterns` suggest a different stack choice (SWR,
 Server Actions, direct DB access from Next), THIS skill wins: apply their
 underlying principle through RTK Query and the Express API instead.
 
+## Blessed libraries (decided picks - do not re-litigate)
+
+`pick-ui-library` is invocation-only, so unattended builds never see its
+decisions; the picks that matter to this stack are restated here. Use them
+without churning; deeper rationale and the full curated list live in
+`pick-ui-library`.
+
+| Need | Use | One-line convention |
+| --- | --- | --- |
+| Data tables | **TanStack Table** | Headless, manual mode, wired to RTK Query + URL params per `reference/data-tables.md` |
+| Charts | **recharts** | Dashboards; conventions in `reference/dashboards.md` |
+| Virtualization | **Virtuoso** | Client-rendered lists longer than ~100 rows |
+| Drag & drop | **dnd kit** | Sortable lists, kanban, reorderable rows |
+| Command menu | **cmdk** | The ⌘K palette (shadcn `Command` wraps it) |
+| Theme switching | **next-themes** | Wire into the scaffold root layout when the app has a theme toggle |
+| OTP input | **input-otp** | Verification-code fields (shadcn `InputOTP` wraps it) |
+| Toasts | **sonner** | Already canonical; the scaffold layout mounts `<Toaster />` |
+
 ---
 
 ## The three rules everything hangs on
@@ -136,11 +154,32 @@ HYGIENE & TYPES
   props down. Don't lift a whole page to the client for one interactive widget.
 *Why:* smaller bundles, faster first paint, SEO on public pages.
 
+### Data tables - see `reference/data-tables.md`
+- Every admin list/table is **TanStack Table in manual mode** over the
+  paginated endpoints: the server owns the data, the URL owns the view state
+  (`page`, `limit`, `sort`, `search`, filters, via the one `useTableParams()`
+  hook), TanStack owns column defs + row model, and rendering goes through
+  mobile-first-ui's dual-render pattern.
+*Why:* back/share/refresh reproduce the exact view; tables are never improvised.
+
 ### Forms & validation
 - react-hook-form + `@hookform/resolvers/zod`; schema in `validations/`.
 - The **frontend Zod schema mirrors the backend** validation for that endpoint
   (document the mirror in a comment) so client and server agree.
 *Why:* instant client feedback with the same rules the server enforces.
+
+### Complex forms - see `reference/complex-forms.md`
+- Multi-step wizards: ONE form instance + ONE schema, per-step `trigger()`,
+  submit only on the final step. Repeating rows: `useFieldArray` with keys
+  from `field.id`. Dirty forms get `useUnsavedChangesGuard(isDirty)`; no
+  autosave unless the spec demands drafts.
+*Why:* wizards and array forms have one canonical shape; improvising forks the UX.
+
+### Dashboards - see `reference/dashboards.md`
+- recharts themed via `--chart-*` CSS tokens (never hex in chart code), house
+  Intl formatters on every axis/tooltip, skeleton/error/"no data yet" per
+  tile, and every chart paired with accessible data.
+*Why:* charts stay theme-correct, readable, and honest in every state.
 
 ### UX states (loading / error / empty)
 - Every `useXQuery` consumer handles `isLoading` (skeleton - reuse `*Skeleton`
@@ -172,4 +211,4 @@ HYGIENE & TYPES
 ## When unsure
 If something looks like a deliberate choice vs. a smell (e.g. a client page that
 could be a Server Component), ask rather than guess. Read the relevant reference
-file before writing the data layer or a form.
+file before writing the data layer, a table, a form, or a dashboard.

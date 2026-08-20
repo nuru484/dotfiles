@@ -116,7 +116,7 @@ Mechanically check each line against the diff:
 - [ ] Middleware order matches the numbered list above; errorHandler is last; 404 (throwing NotFoundError) before it; app routes under /api/v1; /health and /ready at the root.
 - [ ] `trust proxy` is `1`, not `true`.
 - [ ] CORS origins come from `ENV.CORS_ACCESS`; no `*` anywhere near `credentials: true`.
-- [ ] Global limiter active; the strict buckets sit per credential route inside the auth router (login, register, password-reset request/confirm), never on the whole `/auth` mount; limiter rejections flow through `TooManyRequestsError`.
+- [ ] Global limiter active; the strict buckets sit per credential route inside the auth router (login, register, password-reset request/confirm), never on the whole `/auth` mount; limiter rejections flow through `TooManyRequestsError`. One blessed exemption: an SSE stream route (saas-integrations reference/realtime.md) is skipped by the global window and gets its own connection-attempt bucket - do not remove that skip in a hardening pass.
 - [ ] JSON body limit is 100kb globally; bigger limits only on named upload routes.
 - [ ] Auth cookies set ONLY via auth-conventions' CookieManager: `httpOnly`, `secure`, access cookie `sameSite: "lax"` with `path: "/"`, refresh cookie `sameSite: "strict"` path-scoped to the refresh endpoint under `/api/v1/auth`.
 - [ ] Every POST/PUT/PATCH/DELETE passes originCheck; no state change on GET.
@@ -126,6 +126,7 @@ Mechanically check each line against the diff:
 - [ ] Uploads: magic-byte MIME check, size cap, random name, re-encoded, never served from upload dir.
 - [ ] Webhooks: raw body at `/api/v1/webhooks/<provider>`, timing-safe signature check (UnauthorizedError on failure), idempotent by event id, fast 2xx, work enqueued via the typed queue helper with a `<feature>.<action>` name.
 - [ ] No secret/PII in code, logs, URLs, or responses; pino redact paths cover new fields; Prisma queries `select` minimal fields.
+- [ ] PII erasure path exists for user-initiated account deletion (grace period + hard-scrub job; see saas-integrations `reference/data-lifecycle.md`).
 - [ ] Lockfile updated and committed; new deps checked for postinstall scripts; CI audit still passes; engines pins Node LTS.
 - [ ] Next app: CSP present, no new `NEXT_PUBLIC_` secrets, redirect targets whitelisted.
 - [ ] Any server-side fetch of a user URL validates scheme + host allowlist.
