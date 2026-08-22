@@ -34,12 +34,12 @@ digraph when_to_use {
 ## Core Pattern
 
 ```typescript
-// ❌ BEFORE: Guessing at timing
+// WRONG: Guessing at timing
 await new Promise(r => setTimeout(r, 50));
 const result = getResult();
 expect(result).toBeDefined();
 
-// ✅ AFTER: Waiting for condition
+// RIGHT: Waiting for condition
 await waitFor(() => getResult() !== undefined);
 const result = getResult();
 expect(result).toBeDefined();
@@ -83,14 +83,14 @@ See `condition-based-waiting-example.ts` in this directory for complete implemen
 
 ## Common Mistakes
 
-**❌ Polling too fast:** `setTimeout(check, 1)` - wastes CPU
-**✅ Fix:** Poll every 10ms
+**Avoid - Polling too fast:** `setTimeout(check, 1)` - wastes CPU
+**Fix:** Poll every 10ms
 
-**❌ No timeout:** Loop forever if condition never met
-**✅ Fix:** Always include timeout with clear error
+**Avoid - No timeout:** Loop forever if condition never met
+**Fix:** Always include timeout with clear error
 
-**❌ Stale data:** Cache state before loop
-**✅ Fix:** Call getter inside loop for fresh data
+**Avoid - Stale data:** Cache state before loop
+**Fix:** Call getter inside loop for fresh data
 
 ## When Arbitrary Timeout IS Correct
 

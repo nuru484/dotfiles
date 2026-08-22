@@ -184,7 +184,7 @@ src/Modal.tsx:34 - "..." → "…"
 
 ## src/Card.tsx
 
-✓ pass
+pass
 ```
 
 State issue + location. Skip explanation unless fix non-obvious. No preamble.
