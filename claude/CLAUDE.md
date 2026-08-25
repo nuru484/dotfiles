@@ -93,3 +93,86 @@ nothing overrides them.
 - **Responsive UI is part of correctness.** Any web UI must be designed for
   all screen sizes (phone first, tablet, desktop; see mobile-first-ui). A
   layout that breaks at any common viewport is a bug, not a polish item.
+
+# Code voice: write as the owner, never as the assistant
+
+All code, comments, identifiers, commit messages and docs must read as if
+the user wrote them personally. A reader of the repo must never be able to
+tell that a chat produced it.
+
+- **Comments explain code, not history.** A comment earns its place only
+  when it tells the next reader something about the code: what a
+  non-obvious piece does, why a constraint or invariant exists, what a
+  tricky line guards against. Delete anything else.
+- **Banned registers** (never write these, in any file, any repo):
+  - Provenance: "measured from the reference", "copied from the template",
+    "the template's X", "ported from <other repo>", "<other-project>
+    pattern/style/rule", "Hostily-inspired", "from the brand board".
+  - Process or conversation: "as requested", "as you asked", "because you
+    said", "per the decision", "per the review/audit", "the house rule",
+    "(house convention)", "for now we", "this used to be X and moved".
+  - Narrated history: "exported X here for a while", "moved into a dialog -
+    old links must not 404", "it has already failed a build once".
+  - Talking to a person: second person, first-person plural asides,
+    reassurance, rationale aimed at the user rather than at the code.
+- **Copy the design, don't annotate it.** When porting a layout, library
+  pattern or another repo's approach, write the code and describe what it
+  does; do not cite where it came from or what it was measured against.
+- **State the rule, don't cite it.** Instead of "per the one-filter rule",
+  write what the code does: "one filter sits inline beside the search".
+- **No leaked identifiers.** Class names, variables and file names must
+  not carry another project's prefix or name (e.g. `kk-` from a sibling
+  repo).
+- **Self-check before done:** grep the diff for template, reference,
+  measured, pattern), convention), rule), ported, as requested, you/your in
+  comments, and sibling repo names; rewrite every hit.
+
+**Why:** a codebase full of provenance and chat narration reads as
+AI-generated and explains nothing about the logic; the user's name is on
+this work.
+
+# No emoji in code, comments, or docs
+
+Emoji are an AI tell: no developer reaches for a keyboard and types a rocket
+into a log line or a heading. They never appear in anything committed.
+
+- **Banned everywhere:** source code, comments, JSDoc, commit messages, PR
+  titles and bodies, README and other docs, log and console output, error and
+  toast strings, seed and CLI script output, section headings, test names.
+  This includes the "status" set that feels functional but is not:
+  white heavy check mark, cross mark, warning sign, party popper, seedling,
+  rocket, magnifying glass, broom, calendar, lock, package, books.
+- **Write the word instead.** A log line reads `Seed skipped
+  (ADMIN_SEED_ENABLED is not true)`, never a seedling glyph plus the text.
+  Severity belongs in the log level, not in a glyph.
+- **Headings carry no ornament.** `## Tech Stack`, never a hammer-and-wrench
+  before it.
+- **Typographic glyphs count as emoji too. No exception.** Banned in markup,
+  strings and comments exactly like colour emoji, because no developer types
+  them: check mark (U+2713/U+2714), heavy cross (U+2715/U+2716), black and
+  white star (U+2605/U+2606), four-pointed star (U+2726), heart suits
+  (U+2665/U+2661), ballot box (U+2610/U+2611), airplane (U+2708), envelope
+  (U+2709). Anything a reader would call an icon must BE an icon.
+- **Use the project's icon set instead.** Reach for `lucide-react` where the
+  project already has it (shadcn ships it), otherwise the icon library already
+  in use, otherwise a small inline SVG component. Typical swaps: check mark ->
+  `<Check />`, cross -> `<X />`, star -> `<Star />` (fill or outline), heart ->
+  `<Heart />`, ballot box -> `<Square />`, airplane -> `<Plane />`, envelope ->
+  `<Mail />`, four-pointed star -> `<Sparkle />` or a real divider element.
+  Size it with classes, mark it `aria-hidden` when decorative, and give it a
+  label when it carries meaning.
+- **Separators are punctuation, not icons.** A middle dot or an arrow inside
+  running prose is fine; a glyph standing in for a button, a rating or a
+  status is not.
+- **Never use an emoji as a placeholder image or icon in markup.** If a slot
+  needs a picture, use the project's icon set or an image, not a glyph.
+- **Self-check before done:** grep the diff for the emoji ranges
+  (U+1F300-U+1FAFF, U+2600-U+27BF, U+2B00-U+2BFF, and U+FE0F variation
+  selectors) and remove every hit that is not one of the deliberate glyphs
+  above.
+
+**Why:** the user's name is on this work; emoji ornament reads as machine
+output and makes a serious codebase look generated.
+# graphify
+- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
