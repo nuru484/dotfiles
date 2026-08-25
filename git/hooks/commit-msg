@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Global guard: refuse commit messages that mention Claude / Anthropic
+# (attribution trailers, session links, etc.). Bypass for a legitimate
+# mention with:  git commit --no-verify
+msg_file="$1"
+# ignore comment lines (git strips them anyway) 
+if grep -viE '^\s*#' "$msg_file" | grep -qiE 'claude|anthropic'; then
+  echo "✖ commit rejected: message mentions Claude/Anthropic." >&2
+  echo "  Offending line(s):" >&2
+  grep -viE '^\s*#' "$msg_file" | grep -niE 'claude|anthropic' | sed 's/^/    /' >&2
+  echo "  Remove it, or use --no-verify if the mention is intentional." >&2
+  exit 1
+fi
+exit 0

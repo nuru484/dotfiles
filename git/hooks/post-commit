@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Global hook: keep the graphify knowledge graph in step with the code.
+# Only repos that already have a graph (graphify-out/graph.json) are
+# rebuilt, so cloning a random repo never starts indexing it. Opt a repo
+# in by running `graphify update .` once. The rebuild runs in the
+# background and stays silent so committing never waits on it.
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+[ -f "$root/graphify-out/graph.json" ] || exit 0
+command -v graphify >/dev/null 2>&1 || exit 0
+(cd "$root" && nohup graphify update . >"$root/graphify-out/update.log" 2>&1 &)
+exit 0

@@ -11,6 +11,13 @@ Personal machine config, kept in git so it stays identical across computers.
 | `skills/` | Personal skills covering the full build lifecycle |
 | `hooks/` | Hook scripts (pre-commit quality gate) wired via settings.json |
 
+## Git (`git/`)
+
+| File | What it is |
+| --- | --- |
+| `ignore` | Global gitignore: keeps Claude files and `graphify-out/` out of every repo |
+| `hooks/` | Global git hooks (`core.hooksPath`): block Claude files and mentions in commits, rebuild the graphify graph after each commit |
+
 The skills are designed to carry an end-to-end build from a system design
 document with minimal prompting:
 
@@ -32,6 +39,16 @@ document with minimal prompting:
   `systematic-debugging` (root cause before fixes, always),
   `verification-before-completion` (no success claims without fresh evidence)
 - **Meta**: `find-skills`
+- **Codebase graph**: `graphify` (vendored from
+  [Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify), Apache-2.0).
+  `/graphify .` builds a tree-sitter knowledge graph of a repo into
+  `graphify-out/`, then `graphify query|path|explain|affected|god-nodes`
+  answer architecture questions from the graph instead of grepping. Code
+  extraction is local and needs no API key; only docs/PDF/image extraction
+  and community naming use an LLM. The installer puts the `graphify` CLI on
+  the machine, and the global post-commit hook re-runs `graphify update .`
+  after every commit in any repo that already has a graph, so graphs never
+  go stale. To start graphing a repo, run `graphify update .` in it once.
 
 The two-layer design: universal skills (app-blueprint, tdd, git-workflow,
 debugging/verification, CLAUDE.md standards - the latter also carrying
@@ -47,7 +64,9 @@ lint/typecheck/test scripts fail.
 Vendored packs and their upstreams: `vercel-*` (vercel-labs/agent-skills),
 `emil-*`/`animate*`/`apple-design`/`ask-sonner`/`pick-ui-library`/`prototype`
 (emilkowalski/skills), `design-taste` (adapted from Leonxlnx/taste-skill),
-`systematic-debugging` + `verification-before-completion` (obra/superpowers).
+`systematic-debugging` + `verification-before-completion` (obra/superpowers),
+`graphify` (Graphify-Labs/graphify; re-sync with `graphify install --platform claude`
+after `uv tool upgrade graphifyy`).
 To re-sync one: clone upstream, diff against the vendored copy, re-apply the
 house edits (each pack's SKILL.md header lists them), re-run the em-dash
 sweep. Occasionally run the skill-creator plugin's description-optimization
@@ -65,7 +84,10 @@ git clone git@github.com:<user>/dotfiles.git ~/dotfiles
 bash ~/dotfiles/claude/install.sh
 ```
 
-Anything the installer would overwrite is renamed to `*.pre-dotfiles` first.
+The installer links `claude/` into `~/.claude`, links `git/` into
+`~/.git-hooks` and `~/.config/git/ignore`, points git at both, and installs
+the `graphify` CLI through uv. Anything it would overwrite is renamed to
+`*.pre-dotfiles` first.
 
 Two things the repo deliberately does not carry:
 

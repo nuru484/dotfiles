@@ -1,0 +1,14 @@
+# ---- Claude Code / AI-assistant files: never commit these anywhere ----
+.claude/
+.claude/**
+CLAUDE.md
+CLAUDE.local.md
+CLAUDE.*.md
+claude.md
+*.claude.md
+.claude*
+.mcp.json
+.mcp.local.json
+
+# graphify knowledge-graph output
+graphify-out/

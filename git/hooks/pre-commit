@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Global guard: refuse to commit Claude Code files even if force-added.
+# Bypass (deliberately) with:  git commit --no-verify
+bad=$(git diff --cached --name-only --diff-filter=ACMR | grep -iE '(^|/)(\.claude(/|$|[^/]*$)|claude[^/]*\.md$|\.mcp(\.local)?\.json$)' || true)
+if [ -n "$bad" ]; then
+  echo "✖ commit rejected: Claude/AI-assistant files are staged:" >&2
+  echo "$bad" | sed 's/^/    /' >&2
+  echo "  Unstage them (git restore --staged <file>) or use --no-verify if intentional." >&2
+  exit 1
+fi
+exit 0
