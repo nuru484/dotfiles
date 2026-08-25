@@ -109,6 +109,12 @@ back into a regular file and this repo stops receiving updates. After changing a
 setting, `ls -la ~/.claude/settings.json` should still show a `->` arrow. If it
 does not, move the file back into `claude/` and re-run `install.sh`.
 
+## License
+
+MIT, see `LICENSE`. Vendored skill folders keep their upstream license
+(MIT, and Apache-2.0 for graphify); each carries its own `LICENSE` file and
+`THIRD_PARTY_NOTICES.md` lists them all with how each is used.
+
 ## Not included
 
 Session transcripts, history, caches, credentials, and auto-memory all live in
