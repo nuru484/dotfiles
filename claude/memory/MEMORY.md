@@ -25,3 +25,4 @@
 - [Code voice: no provenance/chat comments](code-voice-no-provenance-comments.md) — comments explain code only; never "measured from the reference", "X pattern", "as requested"
 - [No emoji in code or docs](no-emoji-in-code.md) — emoji banned everywhere committed; keep only deliberate UI glyphs (✓ ✕ ★ ✦)
 - [Portfolio Cloudinary cloud mismatch](portfolio-cloudinary-cloud-mismatch.md) — local .env uses dam0swaaq; older project images live on dnpvi7cyq
+- [Milestone start grounding](milestone-start-grounding.md) — re-issue the skills + rules block at the START of every build-plan level, never assume it carried over

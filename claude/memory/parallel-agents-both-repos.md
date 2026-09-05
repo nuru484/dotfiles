@@ -30,7 +30,25 @@ request touching both repos, (1) do the shared groundwork yourself (schema
 or contract decisions), (2) spawn an API agent and a web agent in the same
 message with the exemplar module named and the gates to run, (3) sync
 contracts when the API side lands, (4) run each repo's full gate once at
-the end. Agents working in the same repo must not touch the same files
+the end.
+
+Every agent prompt must name the house skills it is to load and say that
+the repo's own code and docs outrank them: the API agent takes
+backend-conventions, database-migrations, api-contracts, tdd,
+security-hardening and observability; the web agent takes
+frontend-conventions, mobile-first-ui, api-contracts, design-taste,
+web-design-guidelines and emil-design-eng. Load them in the main session
+too, for the edits made there. A prompt that only points at CLAUDE.md
+leaves the agent ungrounded, which the user caught on 2026-09-05.
+
+The web agent is additionally held to a UI bar the user states as the thing
+that matters above all: professional, production grade, clean rather than
+cluttered, and correct at 280, 375, about 768 with the sidebar open, and
+desktop. Spell out the concrete rules (container queries inside the shell,
+dual-rendered tables, the badge rule, no width competition on phone rows,
+worst-case content hardening) rather than naming the skill alone, and make
+it run the web-design-guidelines review over its own files and fix what it
+finds before reporting. Agents working in the same repo must not touch the same files
 (schema.prisma, modules.ts, catalogue.ts, seed-roles.ts, nav.ts are the
 usual collision points), so one agent per repo unless the work is
 file-disjoint. See [[lfms-graphify-graphs]] for the code map and
