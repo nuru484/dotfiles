@@ -29,6 +29,9 @@ The session memory itself (this directory) lives in `~/dotfiles/claude/memory`
 since 2026-09-05 and is linked into `~/.claude/projects/-home-nuru/memory` by
 `install.sh`, so both machines share it; committing a memory file there needs
 `--no-verify` because the global commit hook refuses staged paths whose name
-contains "claude". Per-repo CLAUDE.md stays untracked, so repo-wide rules that
-must reach every machine go in the repo's README Contributing section and
-`docs/CONVENTIONS.md` as well.
+contains "claude". The LFMS repos (lfms-api, lfms-web) negate the global
+ignore in their own `.gitignore` and track CLAUDE.md, AGENTS.md and the
+graphify output (graph.json, manifest, report; not the cache, the html or the
+dated snapshots), so a clone on the other machine carries them; committing
+those files there needs `--no-verify` for the same hook. Other repos still
+leave CLAUDE.md untracked unless their `.gitignore` says otherwise.
