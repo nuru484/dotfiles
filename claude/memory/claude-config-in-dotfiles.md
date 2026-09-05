@@ -24,3 +24,11 @@ ever stops being a symlink, Claude Code replaced it on write - move it back into
 Note: `~/.config/git/ignore` ignores `CLAUDE.md` and `.claude/` globally, so
 per-project CLAUDE.md files are untracked everywhere unless a repo `.gitignore`
 negates it (the dotfiles repo does).
+
+The session memory itself (this directory) lives in `~/dotfiles/claude/memory`
+since 2026-09-05 and is linked into `~/.claude/projects/-home-nuru/memory` by
+`install.sh`, so both machines share it; committing a memory file there needs
+`--no-verify` because the global commit hook refuses staged paths whose name
+contains "claude". Per-repo CLAUDE.md stays untracked, so repo-wide rules that
+must reach every machine go in the repo's README Contributing section and
+`docs/CONVENTIONS.md` as well.
