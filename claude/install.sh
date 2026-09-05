@@ -25,6 +25,12 @@ for item in CLAUDE.md settings.json skills hooks; do
   link "$REPO_ROOT/claude/$item" "$HOME/.claude/$item"
 done
 
+# Auto-memory for sessions started from the home directory, so what one
+# machine learns about the user's repos and preferences the other reads too.
+# Claude keys the project directory by the working directory's path with
+# every slash turned into a dash.
+link "$REPO_ROOT/claude/memory" "$HOME/.claude/projects/$(echo "$HOME" | tr / -)/memory"
+
 # Git: global hooks and global ignore, plus the config keys that point at them.
 link "$REPO_ROOT/git/hooks" "$HOME/.git-hooks"
 link "$REPO_ROOT/git/ignore" "$HOME/.config/git/ignore"

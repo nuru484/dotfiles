@@ -1,0 +1,23 @@
+# Memory Index
+
+- [Commit attribution preference](commit-no-ai-attribution.md) — no AI/co-author in commits or PRs; on LFMS commit each green chunk without asking; push only when asked
+- [No shadows unless explicit](no-shadows-unless-explicit.md) — don't add box-shadows to UI unless the user asks
+- [Prod DB is neondb](prod-db-is-neondb.md) — dms-backend production DB is Neon "neondb", not "dms_test"; migrate that one
+- [Madrasa pages max-width](madrasa-pages-max-width.md) — madrasa dashboard tables/detail views use container mx-auto (+ max-w-7xl on detail), not full-width
+- [Khadys Kitchen role rules](khadys-kitchen-role-rules.md) — staff = read/create/update only (no deletes/refunds/cancel/reject/settings/users); super admin assigns up to own rank, admin assigns STAFF only
+- [AgriTrade backend project](agritrade-backend-project.md) — ~/repos/agritrade-backend; M1+auth done 2026-07-11, khadys is the pattern reference, TS pinned 6.0.x
+- [Khadys dev/testing notes](khadys-dev-testing-notes.md) — X-Rate-Limit-Bypass header for Playwright; WSL OOMs with 2 next devs (khadys may sit on 3001); RowCardList/RowCard mobile table pattern
+- [Design for worst-case content](design-for-worst-case-content.md) — test UI with max-length fields at all widths; break-all for emails, length-adaptive title/stat type scales
+- [Run lint before commit](run-lint-before-commit.md) — Node/TS backends gate CI on `eslint .` (perfectionist alphabetical keys); run `npm run lint`, tsc+tests isn't enough
+- [No migrations in deploy scripts](no-migrations-in-deploy-scripts.md) — user migrates prod manually before pushing; deploy = install --include=dev + generate + build
+- [TravelTrek upgrade state](traveltrek-upgrade.md) — 24 unpushed commits on main (2026-07-16); pesewas, customer split, feature-gating env vars
+- [Deployment URLs](deployment-urls.md) — repo->domain map: dms-frontend=giving.hereafterghana.org, website-frontend=www.hereafterghana.org, khadys=khadyskitchen.com, traveltrek=traveltrek.manuru.dev, etc.
+- [Madrasa donor seed 2026-07](madrasa-donor-seed-2026-07.md) — 230 donors MSP1-MSP234 seeded to prod 2026-07-22; placeholder phones +233000000NNN, skipped/dup codes listed
+- [Machine WSL memory setup](machine-wsl-memory-setup.md) — 16GB Dell; .wslconfig now 11GB+8GB swap (2026-07-28); RAV/SupportAssist uninstall script pending in Temp
+- [Claude config in dotfiles](claude-config-in-dotfiles.md) — ~/.claude CLAUDE.md, settings.json, skills/ are symlinks into ~/dotfiles git repo (2 machines)
+- [OpenAPI docs pattern](swagger-docs-plan.md) — bethere + traveltrek both documented 2026-08-04; split spec, boot merge, CI route-drift check; Express 5 mount-path and Dockerfile traps
+- [AgriTrade cash-book deploy](agritrade-cash-book-deploy.md) — prod migrated through one_held_pot_per_tender + both mains pushed 2026-08-16; user still to classify expense categories, reclassify suspense/till
+- [LFMS graphify graphs](lfms-graphify-graphs.md) — graphify-out in lfms-api, lfms-web and merged ~/repos/lfms-graph (built 2026-09-04); refresh with graphify update + merge-graphs
+- [Parallel agents on paired repos](parallel-agents-both-repos.md) — build API and web with concurrent subagents, several plan steps at once, contracts:sync as the handshake (2026-09-05)
+- [Mobile keyboard safe overlays](mobile-keyboard-safe-overlays.md) — sheets, drawers and modals with inputs must stay clear of the phone keyboard; fix at the overlay primitive (viewport meta, visualViewport inset, reveal on focus)
+- [LFMS UI structure principles](lfms-ui-structure-principles.md) — sidebar is the work only, settings area with grouped menu, account in user menu, tabs on routes, short desktop-only sub-headings at 60%, empty registers keep their action; top-band sub-navigation still owed to the user's spec

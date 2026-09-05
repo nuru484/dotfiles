@@ -117,5 +117,8 @@ MIT, see `LICENSE`. Vendored skill folders keep their upstream license
 
 ## Not included
 
-Session transcripts, history, caches, credentials, and auto-memory all live in
-`~/.claude/` and stay machine-local by design.
+Session transcripts, history, caches and credentials live in `~/.claude/`
+and stay machine-local by design. The auto-memory for sessions started from
+the home directory is the exception: it lives in `claude/memory` and is
+linked into `~/.claude/projects/` by the installer, so both machines share
+what has been learned about the repos and the way work is done.
