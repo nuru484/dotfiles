@@ -21,3 +21,7 @@
 - [Parallel agents on paired repos](parallel-agents-both-repos.md) — build API and web with concurrent subagents, several plan steps at once, contracts:sync as the handshake (2026-09-05)
 - [Mobile keyboard safe overlays](mobile-keyboard-safe-overlays.md) — sheets, drawers and modals with inputs must stay clear of the phone keyboard; fix at the overlay primitive (viewport meta, visualViewport inset, reveal on focus)
 - [LFMS UI structure principles](lfms-ui-structure-principles.md) — sidebar is the work only, settings area with grouped menu, account in user menu, tabs on routes, short desktop-only sub-headings at 60%, empty registers keep their action; top-band sub-navigation still owed to the user's spec
+- [Codebase guide per repo](codebase-guide-per-repo.md) — after studying a repo, write .claude/codebase-guide.md + CLAUDE.local.md pointer, gitignored
+- [Code voice: no provenance/chat comments](code-voice-no-provenance-comments.md) — comments explain code only; never "measured from the reference", "X pattern", "as requested"
+- [No emoji in code or docs](no-emoji-in-code.md) — emoji banned everywhere committed; keep only deliberate UI glyphs (✓ ✕ ★ ✦)
+- [Portfolio Cloudinary cloud mismatch](portfolio-cloudinary-cloud-mismatch.md) — local .env uses dam0swaaq; older project images live on dnpvi7cyq
