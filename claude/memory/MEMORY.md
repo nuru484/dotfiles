@@ -30,3 +30,4 @@
 - [Concise responses](concise-responses.md) — short, lead with the result, no process narration or asides
 - [Seed follows every milestone](seed-follows-every-milestone.md) — a milestone adding models isn't done until the demo seed covers them
 - [Never stop between milestones](never-stop-between-milestones.md) — report and dispatch the next in the same turn; never end on an intention to dispatch
+- [Run targeted tests](run-targeted-tests.md) — only the tests around what changed while iterating; full gate at the end
