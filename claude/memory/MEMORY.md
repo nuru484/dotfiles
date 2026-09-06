@@ -29,3 +29,4 @@
 - [lfms-api suite flake](lfms-api-suite-flake.md) — one test file failed once in five runs (2026-09-06), unidentified; keep full gate logs, never pipe through tail
 - [Concise responses](concise-responses.md) — short, lead with the result, no process narration or asides
 - [Seed follows every milestone](seed-follows-every-milestone.md) — a milestone adding models isn't done until the demo seed covers them
+- [Never stop between milestones](never-stop-between-milestones.md) — report and dispatch the next in the same turn; never end on an intention to dispatch
