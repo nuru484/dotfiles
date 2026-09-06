@@ -53,3 +53,10 @@ finds before reporting. Agents working in the same repo must not touch the same 
 usual collision points), so one agent per repo unless the work is
 file-disjoint. See [[lfms-graphify-graphs]] for the code map and
 [[commit-no-ai-attribution]] for commits.
+
+Two things that waste wall clock, learned 2026-09-06: agents that start blind
+and guess the contract cost two or three reconciliation rounds per milestone,
+so have the API define and sync its schemas before the web agent starts; and
+`rm -f $VAR/*` in an agent's gate script trips a destructive-command guard
+that interrupts the user, so tell agents to quote paths and never glob after
+an unguarded variable.
