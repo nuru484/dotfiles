@@ -9,23 +9,28 @@ set -u
 input=$(cat)
 cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null) || exit 0
 
-# Fast exit for anything that is not a commit. Match "git commit" only at a
-# command position (start, or after && ; |) so text merely containing the
-# phrase (git log --grep "git commit") is not gated. Known residual miss:
-# `git -c x=y commit` - acceptable, Claude does not emit that form.
-case "$cmd" in
-  "git commit"*|*"&& git commit"*|*"; git commit"*|*"| git commit"*) ;;
-  *) exit 0 ;;
-esac
+# The git invocation, matched only at a command position (start, or after
+# && ; |) so text merely containing the phrase (git log --grep "git commit")
+# is not gated. The option run picks up both `-C <path>` and `-c key=value`,
+# so `git -C /path/to/repo commit` is gated like any other commit.
+invocation='(^|&&|;|\|)[[:space:]]*(CLAUDE_SKIP_COMMIT_GATE=1[[:space:]]+)?git([[:space:]]+-[cC][[:space:]]+[^[:space:]]+)*[[:space:]]+commit([[:space:]]|$)'
+printf '%s' "$cmd" | grep -Eq "$invocation" || exit 0
 
-# Escape hatch only as an env-assignment prefix on the commit itself,
-# never as free text elsewhere in the command (e.g. inside a message).
-case "$cmd" in
-  *"CLAUDE_SKIP_COMMIT_GATE=1 git commit"*) exit 0 ;;
-esac
+# Escape hatch only as an env-assignment prefix on the commit itself, never
+# as free text elsewhere in the command (e.g. inside a message).
+skip='(^|&&|;|\|)[[:space:]]*CLAUDE_SKIP_COMMIT_GATE=1[[:space:]]+git([[:space:]]+-[cC][[:space:]]+[^[:space:]]+)*[[:space:]]+commit([[:space:]]|$)'
+printf '%s' "$cmd" | grep -Eq "$skip" && exit 0
 [ "${CLAUDE_SKIP_COMMIT_GATE:-0}" = "1" ] && exit 0
 
-root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+# Gate the repo the command actually writes to, not the session's directory:
+# `git -C <path> commit` and a `cd <path> &&` prefix each retarget it, and
+# gating the wrong repo both misses the real failure and blocks on someone
+# else's.
+target=$(printf '%s' "$cmd" | grep -oP 'git(\s+-c\s+\S+)*\s+-C\s+\K[^\s;&|]+' | head -1)
+[ -n "$target" ] || target=$(printf '%s' "$cmd" | grep -oP '^\s*cd\s+\K[^\s;&|]+' | head -1)
+[ -n "$target" ] || target=.
+eval "target=$target" 2>/dev/null || exit 0
+root=$(git -C "$target" rev-parse --show-toplevel 2>/dev/null) || exit 0
 # Only gate Node repos that declare gate scripts; other repos pass through.
 [ -f "$root/package.json" ] || exit 0
 cd "$root" || exit 0
