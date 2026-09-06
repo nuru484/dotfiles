@@ -12,7 +12,13 @@ On 2026-09-06, verifying M24 at commit b35d5f4, one run of `npm test` in
 passed 959. The failing file was never identified because the command
 piped the reporter through `tail -5`, which kept only the summary.
 
-Unconfirmed suspicion, not a diagnosis: `test/setup.ts` truncates every
+**Identified 2026-09-06 by the seed agent, which saw it under load:**
+`test/integration/identity/mfa-email.test.ts` builds a time-based code for
+the previous 30 second step and fails when activation is slow, which is why
+it only appears on a loaded machine and never in isolation. The fix is to pin
+the clock in that test rather than compute a code against the wall clock.
+
+Superseded suspicion, recorded so nobody chases it again: `test/setup.ts` truncates every
 table before each test and retries when that collides with a write still
 in flight, but the retry only fires when the error message contains
 "deadlock". A lock timeout, or the same collision worded differently by
