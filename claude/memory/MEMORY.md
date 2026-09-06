@@ -27,3 +27,4 @@
 - [Portfolio Cloudinary cloud mismatch](portfolio-cloudinary-cloud-mismatch.md) — local .env uses dam0swaaq; older project images live on dnpvi7cyq
 - [Milestone start grounding](milestone-start-grounding.md) — re-issue the skills + rules block at the START of every build-plan level, never assume it carried over
 - [lfms-api suite flake](lfms-api-suite-flake.md) — one test file failed once in five runs (2026-09-06), unidentified; keep full gate logs, never pipe through tail
+- [Concise responses](concise-responses.md) — short, lead with the result, no process narration or asides
