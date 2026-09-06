@@ -28,3 +28,4 @@
 - [Milestone start grounding](milestone-start-grounding.md) — re-issue the skills + rules block at the START of every build-plan level, never assume it carried over
 - [lfms-api suite flake](lfms-api-suite-flake.md) — one test file failed once in five runs (2026-09-06), unidentified; keep full gate logs, never pipe through tail
 - [Concise responses](concise-responses.md) — short, lead with the result, no process narration or asides
+- [Seed follows every milestone](seed-follows-every-milestone.md) — a milestone adding models isn't done until the demo seed covers them
