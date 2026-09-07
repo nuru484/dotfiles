@@ -32,3 +32,4 @@
 - [Never stop between milestones](never-stop-between-milestones.md) — report and dispatch the next in the same turn; never end on an intention to dispatch
 - [Run targeted tests](run-targeted-tests.md) — only the tests around what changed while iterating; full gate at the end
 - [LFMS layout corrections](lfms-layout-corrections.md) — form/field/heading rules the owner fixed by hand; they live in lfms-web/CLAUDE.md
+- [Fix the class, not the instance](fix-the-class-not-the-instance.md) — sweep for every occurrence of a reported fault; don't wait to be told each one
