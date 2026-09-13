@@ -33,3 +33,8 @@
 - [Run targeted tests](run-targeted-tests.md) — only the tests around what changed while iterating; full gate at the end
 - [LFMS layout corrections](lfms-layout-corrections.md) — form/field/heading rules the owner fixed by hand; they live in lfms-web/CLAUDE.md
 - [Fix the class, not the instance](fix-the-class-not-the-instance.md) — sweep for every occurrence of a reported fault; don't wait to be told each one
+- [LFMS register endpoint gaps](lfms-register-endpoint-gaps.md) — four gaps closed by M30 on 2026-09-07; originals stale-days figure still read from settings
+- [LFMS worktree UI pass](lfms-worktree-ui-pass.md) — main checkouts stay on main for the owner's UI fixes; milestone agents work in .claude/worktrees on feature branches and merge back (2026-09-07)
+- [LFMS: the law is data](lfms-law-is-data.md) — legal, tax and regulatory rules are firm-configurable settings with cited defaults, never code; every such milestone ships its settings screen (2026-09-07)
+- [LFMS handoff 2026-09-07](lfms-handoff-2026-09-07.md) — API M31 search and web W25 email filing were in flight in worktrees; next is web search screen, then 5.10/5.11, then Phase 6
+- [LFMS pause for UI spec](lfms-pause-for-ui-spec.md) — after Phase 5 completes, pause until the owner's screenshot-based UI reference exists; cite it in every web dispatch

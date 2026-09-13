@@ -13,8 +13,14 @@ recorded in each graphify-out/.graphify_python):
 
 - ~/repos/lfms-api/graphify-out (graph.json, graph.html, GRAPH_REPORT.md)
 - ~/repos/lfms-web/graphify-out (same)
-- ~/repos/lfms-graph/graphify-out/graph.json is the cross-repo merge of the
-  two (nodes carry a `repo` attribute); graph.html there is community level.
+- ~/repos/lfms-graph (the cross-repo merge) does NOT exist on disk as of
+  2026-09-07; rebuild it with `graphify merge-graphs` if a cross-repo query
+  is needed.
+
+Both per-repo graphs are stale as of 2026-09-07: built from api fa436de6 /
+web 95bd688f, which is 87 api commits and 186 web commits behind main
+(M28-M30, W20-W24 and the table-fit passes are missing). Run
+`graphify update` in each repo before trusting a query.
 
 graphify-out/ is ignored by the global git excludes file, so building never
 dirties a working tree. Docs were extracted per repo with 8 subagents; the
