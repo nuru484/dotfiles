@@ -363,4 +363,3 @@ const closedX = shouldReduceMotion ? 0 : '-100%';
 ```
 
 Touch devices trigger hover on tap, causing false positives. Gate hover animations behind this media query.
-

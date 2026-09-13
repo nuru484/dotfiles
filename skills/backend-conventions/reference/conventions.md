@@ -111,4 +111,3 @@ architecture and installed APIs take precedence over these house defaults.
 *Why:* a client error maps to server logs; deploys don't sever live requests.
 
 ---
-

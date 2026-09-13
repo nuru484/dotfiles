@@ -9,21 +9,20 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 link() {
   local src="$1" dest="$2"
   mkdir -p "$(dirname "$dest")"
-  if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-    local backup="$dest.pre-dotfiles"
-    echo "backing up existing $(basename "$dest") -> $(basename "$backup")"
-    rm -rf "$backup"
-    mv "$dest" "$backup"
+  if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
+    return
   fi
-  rm -rf "$dest"
+  if [ -e "$dest" ] || [ -L "$dest" ]; then
+    local backup="$dest.pre-dotfiles.$(date +%s%N)"
+    mv "$dest" "$backup"
+    echo "backed up $dest -> $backup"
+  fi
   ln -s "$src" "$dest"
   echo "linked $dest"
 }
 
-# Claude Code: instructions, settings, skills, hook scripts.
-for item in CLAUDE.md settings.json skills hooks; do
-  link "$REPO_ROOT/claude/$item" "$HOME/.claude/$item"
-done
+# Shared skills plus Claude-only integrations.
+python3 "$REPO_ROOT/scripts/install-agent.py" claude
 
 # Auto-memory for sessions started from the home directory, so what one
 # machine learns about the user's repos and preferences the other reads too.
@@ -43,7 +42,9 @@ if ! command -v uv >/dev/null 2>&1; then
   curl -LsSf https://astral.sh/uv/install.sh | sh
   export PATH="$HOME/.local/bin:$PATH"
 fi
-uv tool install --force "graphifyy[sql]" -q
+if ! command -v graphify >/dev/null 2>&1; then
+  uv tool install "graphifyy[sql]" -q
+fi
 echo "installed graphify $(graphify --version 2>/dev/null || echo '(open a new shell: ~/.local/bin is not on PATH yet)')"
 
 echo

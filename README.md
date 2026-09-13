@@ -1,124 +1,104 @@
 # dotfiles
 
-Personal machine config, kept in git so it stays identical across computers.
+Personal configuration and a shared skill library for Claude and Codex.
 
-## Claude Code (`claude/`)
+## Layout
 
-| File | What it is |
+| Path | Purpose |
 | --- | --- |
-| `CLAUDE.md` | Global instructions + engineering standards applied to every project |
-| `settings.json` | Model, effort level, theme, permissions, plugins, hooks |
-| `skills/` | Personal skills covering the full build lifecycle |
-| `hooks/` | Hook scripts (pre-commit quality gate) wired via settings.json |
+| `skills/` | Shared skill source, supporting references, and vendor licenses |
+| `instructions/engineering.md` | Shared preferences, task ownership, and verification rules |
+| `claude/skills/` | Claude-only skills |
+| `codex/skills/` | Codex-only skills |
+| `claude/CLAUDE.md`, `codex/AGENTS.md` | Host entrypoints for shared instructions |
+| `claude/settings.json` | Claude settings and plugin connections |
+| `claude/memory/` | Existing Claude automatic memory; not Codex memory |
+| `scripts/install-agent.py` | Shared/host-only installation and metadata conversion |
+| `git/hooks/` | Git checks independent of the coding agent |
+| `tests/` | Offline installer tests and behavioral evaluation scenarios |
 
-## Git (`git/`)
+## Install
 
-| File | What it is |
-| --- | --- |
-| `ignore` | Global gitignore: keeps Claude files and `graphify-out/` out of every repo |
-| `hooks/` | Global git hooks (`core.hooksPath`): block Claude files and mentions in commits, rebuild the graphify graph after each commit |
-
-The skills are designed to carry an end-to-end build from a system design
-document with minimal prompting:
-
-- **Plan**: `app-blueprint` (design doc -> PLAN.md, domain modeling, default decisions)
-- **Scaffold**: `project-scaffold` (canonical infra modules, bootstrap, local dev)
-- **Build**: `backend-conventions`, `frontend-conventions`, `api-contracts`,
-  `database-migrations`, `auth-conventions`, `saas-integrations`
-- **Quality**: `tdd` (test-first, default methodology), `mobile-first-ui`,
-  `web-design-guidelines`, `security-hardening`, `observability`,
-  `vercel-react-best-practices`, `vercel-composition-patterns` (vendored, with house overrides)
-- **Craft** (vendored from [emilkowalski/skills](https://github.com/emilkowalski/skills),
-  with house overrides): `emil-design-eng`, `animate`, `review-animations`,
-  `improve-animations`, `find-animation-opportunities`, `animation-vocabulary`,
-  `apple-design`, `ask-sonner`, `pick-ui-library`, `prototype`, `animate-expo`;
-  plus `design-taste` (anti-slop defaults + marketing composition, adapted
-  from [Leonxlnx/taste-skill](https://github.com/leonxlnx/taste-skill), MIT)
-- **Ship**: `git-workflow`, `ci-cd`, `release-deploy`
-- **Method** (vendored from [obra/superpowers](https://github.com/obra/superpowers), MIT):
-  `systematic-debugging` (root cause before fixes, always),
-  `verification-before-completion` (no success claims without fresh evidence)
-- **Meta**: `find-skills`
-- **Codebase graph**: `graphify` (vendored from
-  [Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify), Apache-2.0).
-  `/graphify .` builds a tree-sitter knowledge graph of a repo into
-  `graphify-out/`, then `graphify query|path|explain|affected|god-nodes`
-  answer architecture questions from the graph instead of grepping. Code
-  extraction is local and needs no API key; only docs/PDF/image extraction
-  and community naming use an LLM. The installer puts the `graphify` CLI on
-  the machine, and the global post-commit hook re-runs `graphify update .`
-  after every commit in any repo that already has a graph, so graphs never
-  go stale. To start graphing a repo, run `graphify update .` in it once.
-
-The two-layer design: universal skills (app-blueprint, tdd, git-workflow,
-debugging/verification, CLAUDE.md standards - the latter also carrying
-Karpathy-derived rules on simplicity, surgical changes, and surfaced
-assumptions) apply to any software; stack profiles encode the house web
-stack and stay silent elsewhere. Ownership and conflict precedence live in
-`CLAUDE.md`. A commit-gate hook (`hooks/pre-commit-gate.sh`, wired in
-`settings.json`) mechanically blocks `git commit` while a repo's
-lint/typecheck/test scripts fail.
-
-### Vendored-skill upkeep
-
-Vendored packs and their upstreams: `vercel-*` (vercel-labs/agent-skills),
-`emil-*`/`animate*`/`apple-design`/`ask-sonner`/`pick-ui-library`/`prototype`
-(emilkowalski/skills), `design-taste` (adapted from Leonxlnx/taste-skill),
-`systematic-debugging` + `verification-before-completion` (obra/superpowers),
-`graphify` (Graphify-Labs/graphify; re-sync with `graphify install --platform claude`
-after `uv tool upgrade graphifyy`).
-To re-sync one: clone upstream, diff against the vendored copy, re-apply the
-house edits (each pack's SKILL.md header lists them), re-run the em-dash
-sweep. Occasionally run the skill-creator plugin's description-optimization
-evals on the always-on skills.
-
-These are symlinked into `~/.claude/` rather than copied, so editing a skill
-here takes effect immediately and a `git pull` updates the other machine.
-
-### Set up on a new machine
-
-Install Claude Code and sign in once, then:
+From a checkout, install skills and instructions for the hosts in use:
 
 ```bash
-git clone git@github.com:<user>/dotfiles.git ~/dotfiles
-bash ~/dotfiles/claude/install.sh
+python3 scripts/install-agent.py claude
+bash codex/install.sh
 ```
 
-The installer links `claude/` into `~/.claude`, links `git/` into
-`~/.git-hooks` and `~/.config/git/ignore`, points git at both, and installs
-the `graphify` CLI through uv. Anything it would overwrite is renamed to
-`*.pre-dotfiles` first.
+Claude receives individual links under `~/.claude/skills`; Codex receives them under
+`~/.agents/skills`. Each installation directory remains a real directory, so external
+installers can add local skills without writing into the shared source. The entrypoints
+read the common instructions through `~/.config/dotfiles-agent-instructions`.
+Existing files are backed up with unique names. Re-running an unchanged installation
+does not create duplicate backups. Source removal does not prune installed links;
+remove the corresponding link deliberately when retiring a skill.
 
-Two things the repo deliberately does not carry:
+The installers preserve settings and unrelated skills. They do not connect plugins,
+install Graphify, or change Git configuration. For full new-machine Claude/Git/Graphify
+setup, use `bash claude/install.sh`; this also links the existing home-project Claude
+memory and configures global Git hooks/ignore. It preserves previous backups.
 
-- **Plugins** re-install themselves from `settings.json` on first run.
-- **MCP servers** are per-machine. Re-add with `claude mcp add`.
+Run the appropriate installer after adding skills or changing host metadata. Most
+shared content edits follow symlinks immediately. Skills with Claude-only invocation
+metadata get generated Codex entrypoints under `~/.local/share/dotfiles-codex-skills`;
+re-run the Codex installer after editing their SKILL.md. Supporting resources remain
+linked to source. Restart the host if new skill discovery does not refresh.
 
-### Day to day
+## Shared versus host-only
+
+Add portable SKILL.md folders to `skills/`. Put a Claude memory integration or a
+skill depending on Claude runtime fields in `claude/skills/`, and Codex-only workflows
+in `codex/skills/`. Plugins stay in the host's plugin configuration. Credentials,
+session state, caches, and transcripts remain machine-local.
+
+Shared and host-only skill names must be distinct; installation rejects collisions.
+Codex conversion removes supported Claude invocation metadata, including multiline
+argument hints. Explicit-only skills must also declare
+`policy.allow_implicit_invocation: false` in `agents/openai.yaml`. Runtime fields such
+as `context`, `agent`, `model`, or `hooks` are rejected for Codex rather than silently
+dropping the behavior. Create a separate host-specific implementation for those cases.
+
+## Skill maintenance
+
+- A description identifies the task that should select the skill. Avoid technology
+  catchalls that load whole audits for an isolated edit.
+- SKILL.md contains essential decisions and completion evidence. Detailed recipes
+  belong in references loaded only for the affected concern.
+- Shared instructions own universal preferences; individual skills own domain rules.
+  Preserve real invariants without duplicating global process requirements.
+- Existing project architecture and explicit user choices override personal defaults.
+  Reference examples must be checked against installed APIs before adaptation.
+- Run structural validation and the offline installer tests after changes. Re-run
+  relevant scenarios from `tests/skill_scenarios.md` for substantial workflow changes.
+  Record actual evidence; design exercises are not application runtime tests.
 
 ```bash
-cd ~/dotfiles && git add -A && git commit -m "..." && git push   # after editing
-cd ~/dotfiles && git pull                                        # on the other machine
+python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-### Note on `settings.json`
+The skill-creator validator can additionally validate installed Codex skill folders.
+For scripts and runtime recipes, use real behavior tests with isolated fixtures;
+checking that expected wording exists is not a substitute.
 
-Claude Code writes to this file itself (theme changes, plugin installs). If it
-ever saves by replacing the file instead of editing in place, the symlink turns
-back into a regular file and this repo stops receiving updates. After changing a
-setting, `ls -la ~/.claude/settings.json` should still show a `->` arrow. If it
-does not, move the file back into `claude/` and re-run `install.sh`.
+## Git enforcement
 
-## License
+When configured, `git/hooks/pre-commit` checks staged-file policy and invokes
+`quality-gate.sh`. For Node repos it runs declared lint/typecheck/test scripts using
+the project package manager and CI=true. The existing commit-message policy remains
+in `message-rules.sh`; `post-commit` updates an already-existing Graphify graph.
+The old Claude tool hook is a no-op compatibility entrypoint, so it does not run the
+same checks twice. Repositories with their own core.hooksPath must wire shared checks
+explicitly. CI remains the release authority; local hooks can be bypassed.
 
-MIT, see `LICENSE`. Vendored skill folders keep their upstream license
-(MIT, and Apache-2.0 for graphify); each carries its own `LICENSE` file and
-`THIRD_PARTY_NOTICES.md` lists them all with how each is used.
+## Vendored content
 
-## Not included
+Preserve upstream LICENSE files and THIRD_PARTY_NOTICES.md when updating skills.
+Vendored sources include vercel-labs/agent-skills, emilkowalski/skills,
+Leonxlnx/taste-skill, obra/superpowers, and Graphify-Labs/graphify. Review upstream
+changes in a temporary checkout and reapply the task boundaries and local decisions;
+do not overwrite the shared source with an upstream installer.
 
-Session transcripts, history, caches and credentials live in `~/.claude/`
-and stay machine-local by design. The auto-memory for sessions started from
-the home directory is the exception: it lives in `claude/memory` and is
-linked into `~/.claude/projects/` by the installer, so both machines share
-what has been learned about the repos and the way work is done.
+Claude may replace settings.json while saving settings, breaking its symlink. If
+that occurs, reconcile the local settings with the dotfiles source before reinstalling;
+do not discard the local version.
