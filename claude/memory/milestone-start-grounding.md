@@ -4,6 +4,8 @@ description: "Every build-plan milestone starts with the same grounding block: a
 metadata:
   node_type: memory
   type: feedback
+  originSessionId: 984271e8-5394-42a5-96f1-847c85be87a3
+  modified: 2026-09-28T07:50:46.384Z
 ---
 
 On a long unattended build that walks a build plan level by level, the
@@ -19,6 +21,12 @@ API, database sets, loaded whole once per session before the first edit on
 that side) and enforced by the PreToolUse hook `~/.claude/hooks/skill-set-gate.sh`
 (2026-09-27, after the owner asked twice why web work loaded two of six). Precedence is always the repo's own
 code and docs first, then the skills.
+
+For LFMS web work the block also names `lfms-web/docs/PATTERNS.md` (the
+example file per kind of screen, 2026-09-28): every new screen copies its
+kind's example, a truly new pattern is declared there first, and the
+milestone report names each screen's example. The same hook refuses web
+edits until PATTERNS.md and DESIGN-RULES.md have been Read in the session.
 
 **Why:** the user watched a milestone get dispatched with only a pointer to
 CLAUDE.md and asked for the skills to be used (2026-09-05); they then asked
