@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: "Implement testable behavior or a bug fix through small failing-test, implementation, and refactor cycles. Use for logic and behavioral changes or test infrastructure; do not add tests merely to mirror prose, static styles, or configuration wording."
+description: "API and database skill sets: load before the first backend or schema edit of a session, and for any testable web logic. Owns failing-test, implementation and refactor cycles for behavior changes and bug fixes."
 ---
 
 # Test-driven behavior changes

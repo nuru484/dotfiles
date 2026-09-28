@@ -28,4 +28,4 @@ The user's standard for a large product UI (set on the LFMS console, ~/repos/lfm
 
 **Why:** the user's name is on the product; it is sold to law firms and must look production-grade. They review every milestone on screen and send fixes; anything that reads as a side project gets sent back.
 
-**How to apply:** before adding a screen, place it in the navigation model (workspace item, settings group page, account tab, or a tab of an existing page); reuse `PageTabs`, `SectionCard`, the DataTable kit and `RecordLayout`; keep descriptions short; never add a sidebar item for configuration. Related: [[mobile-keyboard-safe-overlays]], [[design-for-worst-case-content]], [[parallel-agents-both-repos]], [[commit-no-ai-attribution]].
+**How to apply:** before adding a screen, place it in the navigation model (workspace item, settings group page, account tab, or a tab of an existing page); reuse `PageTabs`, `SectionCard`, the DataTable kit and `RecordLayout`; keep descriptions short; never add a sidebar item for configuration. Related: [[mobile-keyboard-safe-overlays]], [[design-for-worst-case-content]], [[no-subagents-by-default]], [[commit-no-ai-attribution]].

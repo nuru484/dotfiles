@@ -1,6 +1,6 @@
 ---
 name: web-design-guidelines
-description: "Audit specified web UI changes for accessibility, semantics, keyboard behavior, and UX defects. Use for requested reviews or changes to interactive semantics; do not audit unrelated pages or apply marketing rules to every edit."
+description: "Web skill set: load with the rest of the set before the first frontend edit of a session. Owns accessibility, semantics, keyboard behavior and UX defects in the UI a change touches; also runs requested UI reviews."
 
 metadata:
   author: vercel

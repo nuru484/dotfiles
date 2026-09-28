@@ -1,6 +1,6 @@
 ---
 name: api-contracts
-description: "Define or change HTTP request/response contracts between the Express API and its clients: wire types, errors, pagination, and compatibility. Use when an externally visible shape changes, not internal refactors."
+description: "Web and API skill sets: load before the first edit on either side of a session. Owns HTTP request/response contracts between the Express API and its clients: wire types, errors, pagination and compatibility."
 ---
 
 # API Contract Conventions

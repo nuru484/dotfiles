@@ -12,7 +12,7 @@ From 2026-09-07 the owner reviews the LFMS console on their dev server,
 which watches the main checkout of ~/repos/lfms-web, and sends UI faults
 to be fixed on main while the build-plan milestones run on branches.
 So: the main checkouts of lfms-api and lfms-web are never switched to a
-branch. Each milestone agent creates its own worktree under
+branch. Each milestone (worked in the main session, see [[no-subagents-by-default]]) creates its own worktree under
 `.claude/worktrees/<name>` on `feature/<name>`, symlinks node_modules,
 copies .env (API: also `npx prisma generate`), runs its gate there, merges
 main into its branch before merging back, then merges to main from the
@@ -31,4 +31,4 @@ that work.
 these steps; keep them in every dispatch. A UI rule fixed on main goes into
 lfms-web/CLAUDE.md or docs/CONVENTIONS.md as well, and each agent re-reads
 those before merging so new screens follow it. See
-[[parallel-agents-both-repos]] and [[lfms-ui-structure-principles]].
+[[no-subagents-by-default]] and [[lfms-ui-structure-principles]].

@@ -1,6 +1,6 @@
 ---
 name: design-taste
-description: "Choose or refine visual direction, typography, palette, and marketing-page composition. Use for new visual surfaces or redesigns; preserve existing branding during small edits and leave responsive mechanics and motion to their own skills."
+description: "Web skill set: load with the rest of the set before the first frontend edit of a session. Owns visual direction, typography, palette and composition; on existing screens it holds the design system steady rather than restyling."
 ---
 
 # Visual direction and composition

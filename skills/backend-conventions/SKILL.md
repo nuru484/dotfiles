@@ -1,6 +1,6 @@
 ---
 name: backend-conventions
-description: "Implement Express/Prisma routes, services, validation, queries, and transactions using the project conventions. Owns backend layering and data access; schema migrations and HTTP contract changes have separate skills."
+description: "API and database skill sets: load before the first backend or schema edit of a session. Owns Express/Prisma routes, services, validation, queries and transactions using the project conventions."
 ---
 
 # Backend layering and data access

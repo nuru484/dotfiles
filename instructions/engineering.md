@@ -7,9 +7,23 @@ Within this library, project instructions and established architecture take
 precedence over personal defaults; domain-specific conventions take precedence
 over vendored examples. Preserve licenses and legally required attribution.
 
-Load skills for the actual change, not every technology present in the repo.
-A cross-skill reference is a routing option, not a command to load the entire
-library. Read only the relevant supporting sections. Explicit-only skills stay
+Skills load by side of the stack. Before the first edit on a side in a
+session, load that side's whole set once. The set is the owner's standing rule
+and outranks any single skill's description; the size of the edit does not
+shrink it.
+
+- Web (Next.js app or site, any page, component, form, slice or style):
+  frontend-conventions, mobile-first-ui, api-contracts, design-taste,
+  web-design-guidelines, emil-design-eng.
+- API (Express/Prisma routes, services, workers, jobs): backend-conventions,
+  api-contracts, tdd, security-hardening, observability, database-migrations.
+- Database (Prisma schema, migrations, backfills, seed): database-migrations,
+  backend-conventions, tdd.
+
+Add auth-conventions when identity, access or tenancy changes, git-workflow
+before committing, and verification-before-completion before reporting done.
+Other skills load for the change they name. Within a loaded skill, read only
+the supporting sections the change needs. Explicit-only skills stay
 explicit-only; another skill must not silently invoke them.
 
 | Concern | Owner |

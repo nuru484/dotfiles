@@ -8,7 +8,7 @@ metadata:
 
 While a build plan is being worked, the user does not want to be asked
 whether to continue. When a milestone finishes: verify, merge, push, write a
-short report, and dispatch the next milestone in the same turn. Keep going
+short report, and start the next milestone in the same turn. Keep going
 until told to stop.
 
 The specific failure to avoid: writing "dispatching that now" and then ending

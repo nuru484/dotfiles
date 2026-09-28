@@ -1,6 +1,6 @@
 ---
 name: emil-design-eng
-description: "Polish an existing web interaction or component that works but feels awkward: feedback, interruption, focus, hover, and perceived responsiveness. For building a specific animation use animate; for responsive layout use mobile-first-ui."
+description: "Web skill set: load with the rest of the set before the first frontend edit of a session. Owns interaction quality of the controls a change adds or touches: feedback, focus, interruption, hover and perceived responsiveness."
 ---
 
 # Existing interaction polish

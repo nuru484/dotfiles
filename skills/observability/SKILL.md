@@ -1,6 +1,6 @@
 ---
 name: observability
-description: "Add or change structured logging, request correlation, error tracking, health/readiness checks, or graceful shutdown for Express APIs and workers. Instrument the affected path without adding unrelated monitoring infrastructure."
+description: "API skill set: load with the rest of the set before the first backend edit of a session. Owns structured logging, request correlation, error tracking, health/readiness checks and graceful shutdown on the paths a change touches."
 ---
 
 # Observability Conventions

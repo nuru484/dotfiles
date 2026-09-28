@@ -1,6 +1,6 @@
 ---
 name: mobile-first-ui
-description: "Build or fix responsive web layouts, tables, forms, overlays, and navigation, including long-content and mobile-keyboard behavior. Use for layout and responsive changes; do not activate for data-only or backend work."
+description: "Web skill set: load with the rest of the set before the first frontend edit of a session. Owns responsive layout, tables, forms, overlays and navigation at every width, long content and mobile-keyboard behavior."
 ---
 
 # Mobile-First UI

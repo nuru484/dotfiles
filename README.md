@@ -61,8 +61,9 @@ dropping the behavior. Create a separate host-specific implementation for those 
 
 ## Skill maintenance
 
-- A description identifies the task that should select the skill. Avoid technology
-  catchalls that load whole audits for an isolated edit.
+- A description names the skill set it belongs to (web, API, database; see
+  `instructions/engineering.md`) and the work that loads it, stated positively. It
+  never invites skipping the skill for a small edit; the set loads whole.
 - SKILL.md contains essential decisions and completion evidence. Detailed recipes
   belong in references loaded only for the affected concern.
 - Shared instructions own universal preferences; individual skills own domain rules.

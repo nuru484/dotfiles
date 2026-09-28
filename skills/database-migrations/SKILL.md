@@ -1,6 +1,6 @@
 ---
 name: database-migrations
-description: "Design Prisma/PostgreSQL schema changes, migrations, backfills, and recovery. Use when database structure or migration state changes, not routine queries against an unchanged schema."
+description: "API and database skill sets: load before the first backend or schema edit of a session. Owns Prisma/PostgreSQL schema changes, migrations, backfills and recovery."
 ---
 
 # Database & Migration Conventions

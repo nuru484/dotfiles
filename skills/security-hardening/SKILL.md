@@ -1,6 +1,6 @@
 ---
 name: security-hardening
-description: "Implement or review security controls affected by a change: trust boundaries, CSRF/CORS, rate limits, uploads, webhooks, or secret handling. Whole-project security audits apply only when requested; auth behavior belongs to auth-conventions."
+description: "API skill set: load with the rest of the set before the first backend edit of a session. Owns the security controls a change touches: trust boundaries, CSRF/CORS, rate limits, uploads, webhooks and secrets."
 ---
 
 # Security Hardening (build-time)

@@ -14,10 +14,10 @@ by name, and re-read the repo's CLAUDE.md, README working rules, PLAN.md,
 the build plan and the binding system design. The same holds for the main
 session: load the skills covering whatever it is about to edit itself.
 
-Skills by side: API takes backend-conventions, database-migrations,
-api-contracts, tdd, security-hardening, observability; web takes
-frontend-conventions, mobile-first-ui, api-contracts, design-taste,
-web-design-guidelines, emil-design-eng. Precedence is always the repo's own
+Skills by side are defined in `~/dotfiles/instructions/engineering.md` (web,
+API, database sets, loaded whole once per session before the first edit on
+that side) and enforced by the PreToolUse hook `~/.claude/hooks/skill-set-gate.sh`
+(2026-09-27, after the owner asked twice why web work loaded two of six). Precedence is always the repo's own
 code and docs first, then the skills.
 
 **Why:** the user watched a milestone get dispatched with only a pointer to
@@ -32,5 +32,5 @@ shorten it to "follow the conventions" on the grounds that an earlier
 milestone already said it. Above all it carries the user's standing UI bar:
 professional, production grade, clean rather than cluttered, correct at 280,
 375, about 768 with the sidebar open, and desktop. See
-[[parallel-agents-both-repos]] for the dispatch shape and
+[[no-subagents-by-default]] for the dispatch shape and
 [[lfms-ui-structure-principles]] for the console's own rules.

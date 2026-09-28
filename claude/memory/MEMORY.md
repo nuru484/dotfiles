@@ -9,7 +9,7 @@
 - [Khadys dev/testing notes](khadys-dev-testing-notes.md) — X-Rate-Limit-Bypass header for Playwright; WSL OOMs with 2 next devs (khadys may sit on 3001); RowCardList/RowCard mobile table pattern
 - [Design for worst-case content](design-for-worst-case-content.md) — test UI with max-length fields at all widths; break-all for emails, length-adaptive title/stat type scales
 - [Run lint before commit](run-lint-before-commit.md) — Node/TS backends gate CI on `eslint .` (perfectionist alphabetical keys); run `npm run lint`, tsc+tests isn't enough
-- [No migrations in deploy scripts](no-migrations-in-deploy-scripts.md) — user migrates prod manually before pushing; deploy = install --include=dev + generate + build
+- [No migrations in deploy scripts](no-migrations-in-deploy-scripts.md) — user migrates prod manually before pushing; deploy = install --include=dev + generate + build; not LFMS, see lfms-deploy-migrates
 - [TravelTrek upgrade state](traveltrek-upgrade.md) — 24 unpushed commits on main (2026-07-16); pesewas, customer split, feature-gating env vars
 - [Deployment URLs](deployment-urls.md) — repo->domain map: dms-frontend=giving.hereafterghana.org, website-frontend=www.hereafterghana.org, khadys=khadyskitchen.com, traveltrek=traveltrek.manuru.dev, etc.
 - [Madrasa donor seed 2026-07](madrasa-donor-seed-2026-07.md) — 230 donors MSP1-MSP234 seeded to prod 2026-07-22; placeholder phones +233000000NNN, skipped/dup codes listed
@@ -18,7 +18,7 @@
 - [OpenAPI docs pattern](swagger-docs-plan.md) — bethere + traveltrek both documented 2026-08-04; split spec, boot merge, CI route-drift check; Express 5 mount-path and Dockerfile traps
 - [AgriTrade cash-book deploy](agritrade-cash-book-deploy.md) — prod migrated through one_held_pot_per_tender + both mains pushed 2026-08-16; user still to classify expense categories, reclassify suspense/till
 - [LFMS graphify graphs](lfms-graphify-graphs.md) — graphify-out in lfms-api, lfms-web and merged ~/repos/lfms-graph (built 2026-09-04); refresh with graphify update + merge-graphs
-- [Parallel agents on paired repos](parallel-agents-both-repos.md) — build API and web with concurrent subagents, several plan steps at once, contracts:sync as the handshake (2026-09-05)
+- [No subagents by default](no-subagents-by-default.md) — never spawn subagents unless explicitly asked; unnumbered ask = one; also in global CLAUDE.md (2026-09-27)
 - [Mobile keyboard safe overlays](mobile-keyboard-safe-overlays.md) — sheets, drawers and modals with inputs must stay clear of the phone keyboard; fix at the overlay primitive (viewport meta, visualViewport inset, reveal on focus)
 - [LFMS UI structure principles](lfms-ui-structure-principles.md) — sidebar is the work only, settings area with grouped menu, account in user menu, tabs on routes, short desktop-only sub-headings at 60%, empty registers keep their action; top-band sub-navigation still owed to the user's spec
 - [Codebase guide per repo](codebase-guide-per-repo.md) — after studying a repo, write .claude/codebase-guide.md + CLAUDE.local.md pointer, gitignored
@@ -38,3 +38,4 @@
 - [LFMS: the law is data](lfms-law-is-data.md) — legal, tax and regulatory rules are firm-configurable settings with cited defaults, never code; every such milestone ships its settings screen (2026-09-07)
 - [LFMS handoff 2026-09-07](lfms-handoff-2026-09-07.md) — API M31 search and web W25 email filing were in flight in worktrees; next is web search screen, then 5.10/5.11, then Phase 6
 - [LFMS pause for UI spec](lfms-pause-for-ui-spec.md) — after Phase 5 completes, pause until the owner's screenshot-based UI reference exists; cite it in every web dispatch
+- [LFMS deploy migrates](lfms-deploy-migrates.md) — LFMS push runs migrations itself; preview runs without the worker on purpose (2026-09-27)

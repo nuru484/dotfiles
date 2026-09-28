@@ -2,27 +2,24 @@
   "permissions": {
     "defaultMode": "bypassPermissions"
   },
-  "model": "opus[1m]",
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$HOME/.claude/hooks/pre-commit-gate.sh\"",
-            "timeout": 600,
-            "statusMessage": "Running quality gates before commit"
-          }
-        ]
-      }
-    ]
+  "skillOverrides": {
+    "animation-vocabulary": "off",
+    "apple-design": "off",
+    "ask-sonner": "off",
+    "find-animation-opportunities": "off",
+    "find-skills": "off",
+    "improve-animations": "off",
+    "vercel-composition-patterns": "off",
+    "vercel-react-best-practices": "off"
   },
   "enabledPlugins": {
     "vercel@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true
+    "pr-review-toolkit@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": true,
+    "claude-mem@thedotmack": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "ponytail@ponytail": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
@@ -30,11 +27,42 @@
         "source": "github",
         "repo": "anthropics/claude-plugins-official"
       }
+    },
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
     }
   },
   "effortLevel": "high",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "medium"
+    }
+  },
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
   "inputNeededNotifEnabled": true,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/skill-set-gate.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }

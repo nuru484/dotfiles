@@ -1,6 +1,6 @@
 ---
 name: frontend-conventions
-description: "Implement Next.js App Router frontend structure, RTK Query data flow, forms, and rendering boundaries in the house stack. Use for structural frontend changes, not isolated styling, animation, or unrelated React stacks."
+description: "Web skill set: load with the rest of the set before the first frontend edit of a session (any Next.js page, component, form, RTK Query slice or style). Owns App Router structure, RTK Query data flow, forms and rendering boundaries in the house stack."
 ---
 
 # Frontend architecture and data flow
