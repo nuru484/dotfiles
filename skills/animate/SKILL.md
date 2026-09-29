@@ -40,7 +40,8 @@ explicit-only pick-ui-library or review-animations skills.
 
 Check state interruption, dismissal/focus, reduced motion, and relevant component
 behavior with the project's available functional checks. Static inspection cannot
-prove smoothness or feel. Report the chosen behavior and what the user should
-inspect in the rendered result. Do not start a browser/dev server unless requested.
+prove smoothness or feel. Watch it run in a browser at phone and desktop widths, with reduced motion on
+and off, before reporting; report the chosen behavior and what the user should
+still judge by feel.
 
 Performance reference: [Motion animation performance](https://motion.dev/docs/performance).

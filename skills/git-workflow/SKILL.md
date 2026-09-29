@@ -28,6 +28,23 @@ passing evidence remains valid for unchanged work, although Git hooks may repeat
 checks mechanically. Fix hook failures within scope; bypass hooks only when the
 user explicitly authorizes it. Do not use obsolete CLAUDE_SKIP_COMMIT_GATE settings.
 
+A hook is a floor, not the gate: know what it runs. A hook that lints and
+typechecks proves nothing about tests; run the tests the change touched, a
+changed test included, before committing. A hook that checks the working tree
+proves nothing about a commit that stages part of it: when one change is split
+into several commits, each must build on its own (order them so shared types land
+with the code that fills them, or check the staged tree with
+`git stash --keep-index`).
+
+Before the first commit in a repository, read the effective commit-msg hook and
+its rules (length, body lines, trailers): a message refused after a slow
+pre-commit run costs the whole run. After any refused commit, check
+`git diff --cached --stat` before the next one; the index stays staged.
+
+Chain an outward step to its check mechanically: `gate && git push` in one
+command, or read the recorded exit status in a separate call first. Never read a
+gate's output and push in the same call.
+
 Global hooks live under ~/.git-hooks when installed. A repository using Husky or
 another core.hooksPath overrides them; inspect the effective hook before claiming
 checks are enforced. Changing project hooks is a separate setup task, not an

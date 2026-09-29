@@ -43,5 +43,11 @@ Use project-scaffold only for infrastructure actually needed and missing.
 Verify the affected query/mutation/form behavior, cache invalidation, and relevant
 loading/error/empty or submission states. Check labels, focus, and keyboard access
 when interactive semantics change. Run relevant project checks; distinguish code
-inspection from the user's pending visual review. Report contract dependencies if
+inspection from the live walk (mobile-first-ui, Verification). When a change adds
+or edits route files (`page.tsx`, `layout.tsx`, `route.ts`), run the production
+build too: a page module exporting anything beyond its allowed fields passes tsc,
+lint and tests and fails only `next build`; keep helpers in a feature module.
+When the app enables the React Compiler, component tests run through it, and
+nullable props are never read with `x!.prop` inside hooks or closures.
+Report contract dependencies if
 the API side cannot be inspected or updated in this task.

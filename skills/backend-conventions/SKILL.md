@@ -36,6 +36,23 @@ wire changes use api-contracts, and access behavior uses auth-conventions.
 These house recipes are examples to adapt to the installed version, not a mandate
 to add every module. Soft deletion, queues, and audit events need domain reasons.
 
+## Relationships and edits
+
+- A role enum on a relationship is a vocabulary, not a model. For each role write
+  down which entity kinds may hold it, which roles exclude each other for one
+  entity in one context, standing elsewhere that disqualifies (a client offered as
+  opposing counsel), attributes valid only for some roles, and which roles belong
+  to another register. Enforce them in one domain function on every write path,
+  seeds included, and filter pickers that choose from the relationship for a
+  role-specific act (one entry per entity, not per row).
+- Every reference is a foreign key, a relationship with history where it changes
+  over time, returned as a typed reference object and navigable both ways. Add a
+  guard that fails on an `...Id` response field without its reference object.
+- Scripted edits replace an exact block asserted to occur once, or a whole
+  function by its own delimiters; never the span between two markers, which
+  sorting autofixers invalidate. Read `git diff` for removed lines after any
+  scripted multi-region edit.
+
 ## Completion
 
 Exercise the public behavior and relevant invalid/denied paths. For state-changing

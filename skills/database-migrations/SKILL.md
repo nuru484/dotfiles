@@ -69,13 +69,21 @@ MIGRATION SAFETY
 npx prisma migrate dev --name descriptive_change --create-only
 # 2. Inspect prisma/migrations/<timestamp>_descriptive_change/migration.sql
 #    (locks? backward compatible? matches intent?) - edit here if needed
-# 3. Apply locally
-npx prisma migrate dev
+# 3. Apply locally. In a non-interactive shell (an agent, CI) use deploy:
+#    migrate dev can wait on a prompt nothing answers.
+npx prisma migrate deploy
+# Generate SQL without touching a database (drifted or shared dev DBs):
+npx prisma migrate diff --from-schema <committed schema> --to-schema prisma/schema.prisma --script
 
 # CI/CD applies, never edits:
 npx prisma migrate deploy
 ```
 
+- A foreign key or index added by hand in SQL is declared in the Prisma schema
+  too, or the next generated migration drops it.
+- Editing an applied but unpushed migration: refresh its checksum in the local
+  `_prisma_migrations` and drop cached test template databases.
+- Apply hand-written repair SQL atomically: `psql -1 -v ON_ERROR_STOP=1 -f file`.
 - One migration = one coherent change with a **descriptive name** (not `init`
   for the 12th time).
 - **Backfills** run as batched, idempotent scripts (use `p-map` for controlled

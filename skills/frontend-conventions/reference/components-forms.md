@@ -134,6 +134,11 @@ Rules:
 - The Zod schema is the form's source of truth - derive the TS type with
   `z.infer`, don't declare a parallel interface.
 - Disable submit while `isLoading`; reset/close on success; toast on error.
+- Every control wrapper that binds a field (`Controller`, `useController`)
+  renders `fieldState.error` with the same error line, `role="alert"` and
+  `aria-invalid` as the standard field wrapper. A server error mapped onto a field
+  whose wrapper has no error slot is a silent refusal: the form stays open with
+  no reason shown.
 
 ## Typed env for the browser
 

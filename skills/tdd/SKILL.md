@@ -33,6 +33,20 @@ executable reproduction is impractical (for example a device-only rendering defe
 record the limitation and the concrete manual reproduction; do not claim automated
 coverage or create a test that merely matches the fix's source text.
 
+In a build of many areas (a milestone with dozens of operations or screens), wire
+and test one area at a time: register its routes or screen alone, see its first
+test fail, then build it. A route file or barrel that imports use cases not yet
+written is the moment test-first gives way to batch implementation; split it so
+each area compiles on its own. Every commit that adds a use case or screen carries,
+or follows, a test that failed without it; say which when reporting.
+
+A change to a test is itself a change: run the edited test file and observe its
+result before committing, whatever the commit hook runs.
+
+When the app's build applies a transform (the React Compiler, a Babel or SWC
+plugin), component tests run through the same transform, or they cannot see the
+defects it introduces.
+
 Test files follow existing repository naming and tools. New harnesses should cover
 one real behavior before expanding. Use isolated test databases and deterministic
 fixtures; never aim mutation tests at production. Verify transaction/race behavior
@@ -41,6 +55,9 @@ with the actual database where mocks would hide it.
 ## Completion evidence
 
 Report the relevant failing/passing cycle, final targeted check results, and any
-untested consequential case. Run broader checks when required by the repo or when
+untested consequential case. Targeted runs select by what changed, not by what was
+being built: when a change touches a shared component, module or primitive, its own
+test files and guard tests are in the run, and an intended behavior change updates
+the old assertion in the same commit. Run broader checks when required by the repo or when
 the change crosses shared boundaries. Passing unit tests alone do not establish
 contract compatibility, browser behavior, or release readiness.

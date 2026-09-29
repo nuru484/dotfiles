@@ -16,7 +16,7 @@ those paths exist); otherwise the reference file is the source of truth.
 
 ## Static review of the affected layout
 
-Since self-rendering is banned (see Verification), "check" here means: reason
+This is the pre-check before the live walk (see Verification): reason
 through each item against the written code at the stated viewport and fix
 what fails on paper. Review applicable items only. Static reasoning identifies risks; it does not prove a viewport renders correctly.
 
@@ -203,10 +203,11 @@ emails, 1000-char notes, max-int amounts):
 
 ## Verification
 
-The user reviews the rendered UI themselves and will report what to adjust.
-Unless explicitly requested, do not start dev servers, drive the app with Playwright, or take screenshots
-to self-verify UI work. Apply the rules above at write time; when the user
-reports a visual issue, fix it from their description.
+Apply the rules above at write time, then walk it live in a browser (Playwright) at the project's widths (default 1440,
+1024, 768, 390 and 344), with empty, seeded and maximum-length data, light and
+dark where both exist. Static review is the pre-check; the live walk is the
+evidence. It is also how a reported visual defect is reproduced before it is
+fixed. Keep one dev server at a time where memory is tight.
 
 ## Scope boundary
 

@@ -87,6 +87,11 @@ Every payment feature follows this exact sequence. Full code: `reference/payment
   and max bytes. *Why:* an unconstrained signature is an open upload endpoint.
 - Store `publicId` + `width`/`height` + `bytes` + `format`; derive URLs at
   render time with `f_auto,q_auto`. *Why:* stored URLs rot when transforms change.
+- Where the API must upload a non-media file from a buffer or stream, set
+  `resource_type: "raw"` and a `public_id` of sanitised stem + random suffix +
+  the extension of the verified (byte-sniffed) type; otherwise the asset is
+  stored and served extensionless as octet-stream. Derive the resource type for
+  signing or deleting from the stored URL path, never from the file extension.
 - Deletion lifecycle: soft delete rows like everything else; `destroy` on
   Cloudinary only at hard delete; run an orphan-sweep job for uploads that never
   got attached to a record.

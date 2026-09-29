@@ -79,10 +79,12 @@ release checks before release. Reuse passing evidence while the relevant code,
 configuration, and environment remain unchanged. Separate pre-existing failures
 from regressions. Report what passed, what failed, and what remains unverified.
 
-The user reviews rendered UI. Do not start dev servers, run browser sessions, or
-take screenshots for self-verification unless the user explicitly requests it.
-Functional tests and API checks are permitted within task scope. Static UI review
-is useful but is not evidence of browser behavior or visual quality.
+UI work is walked live before it is reported done: drive the running app in a
+browser (Playwright) at the project's widths (default 1440, 1024, 768, 390 and
+344) with empty, seeded and maximum-length data, and reproduce a reported visual
+defect live before fixing it. Static UI review is the pre-check, not evidence of
+browser behavior or visual quality. Run one dev server at a time where memory is
+tight, and stop it when the walk is done.
 
 ## Writing and code voice
 

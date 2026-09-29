@@ -28,6 +28,13 @@ Use only applicable sections:
 - Ordered vertical milestones, each with completion evidence and remaining risks.
 - Release requirements when release is part of the request.
 
+For every entity a milestone adds or changes, include a relationship pass: every
+reference to and from it (scan the schema), each a key or a dated relationship,
+returned as a typed reference and navigable both ways on screen. For every
+role-bearing relationship, list eligibility and exclusivity per role
+(backend-conventions, Relationships and edits). An entity is only as complete as
+its relationships.
+
 Define criteria before implementation: for example, duplicate payment events
 produce one ledger entry; another tenant cannot read the resource; a retry after
 an uncertain provider response reconciles without charging twice.
@@ -64,5 +71,5 @@ Deploy only within authorization; otherwise report release readiness and remaini
 release actions. Do not equate local test success with deployment success.
 
 Use safe representative seed data if a demo is needed. Document how to provision
-credentials securely, never real credentials. The user performs visual review;
-record it as pending until supplied rather than claiming a clicked-through flow.
+credentials securely, never real credentials. Walk each milestone's screens live
+(mobile-first-ui, Verification) and report what the walk covered.

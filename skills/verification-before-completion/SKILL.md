@@ -15,6 +15,12 @@ not runtime behavior; a targeted test proves its covered cases, not the full sui
 4. Inspect the final diff for omissions, unrelated changes, and accidental secrets.
 5. State the result with its practical limits and any remaining required work.
 
+Evidence belongs to one exact tree. A gate counts only if nothing it reads
+changed while it ran: make no edits in that checkout until it exits (or run it in
+a separate worktree), note the commit it ran against, and treat any edit after it
+started as invalidating it, pass or fail. Read the exit status, not only the
+counts, before any step that depends on it.
+
 For a bug, reproduce the original symptom, preferably with a regression test;
 confirm failure before the fix and success after it. Do not destructively revert
 unrelated work merely to demonstrate a red-green cycle.
@@ -25,7 +31,9 @@ performed it. For a release, use release-deploy's environment and smoke evidence
 
 Pre-existing failures remain separate from new regressions. Fix blockers within
 scope; do not conceal failures or expand the assignment to unrelated repairs.
-Visual verification follows the user's review workflow. An unavailable browser or
+UI changes are walked live in a browser at the project's widths (default 1440,
+1024, 768, 390 and 344) with worst-case content before they are reported done;
+static review is the pre-check, not the evidence. An unavailable browser or
 service is an unverified item, not a passing check and not a reason to block useful
 independent work.
 
