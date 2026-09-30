@@ -31,3 +31,6 @@ first time it happens. When it recurs, read the failing file and the
 assertion before touching the harness. Do not broaden that retry on
 suspicion alone: a wider catch in test setup could mask a genuine lock
 problem in the code under test. See [[milestone-start-grounding]].
+
+
+**Identified 2026-09-29:** billing/bill-rules.test.ts "numbers twenty bills posted at once" (~6s alone, >20s under 7 parallel workers); given a 60s limit in commit 6e8f043b on main.

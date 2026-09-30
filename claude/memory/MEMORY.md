@@ -19,6 +19,7 @@
 - [AgriTrade cash-book deploy](agritrade-cash-book-deploy.md) — prod migrated through one_held_pot_per_tender + both mains pushed 2026-08-16; user still to classify expense categories, reclassify suspense/till
 - [LFMS graphify graphs](lfms-graphify-graphs.md) — graphify-out in lfms-api, lfms-web and merged ~/repos/lfms-graph (built 2026-09-04); refresh with graphify update + merge-graphs
 - [No subagents by default](no-subagents-by-default.md) — never spawn subagents unless explicitly asked; unnumbered ask = one; also in global CLAUDE.md (2026-09-27)
+- [Delegate to Sonnet with full specs](delegate-to-sonnet-with-full-specs.md) — superseded 30 Sep: lead builds directly, one Sonnet helper for mechanical work, see lfms-build-on-main
 - [Mobile keyboard safe overlays](mobile-keyboard-safe-overlays.md) — sheets, drawers and modals with inputs must stay clear of the phone keyboard; fix at the overlay primitive (viewport meta, visualViewport inset, reveal on focus)
 - [LFMS UI structure principles](lfms-ui-structure-principles.md) — sidebar is the work only, settings area with grouped menu, account in user menu, tabs on routes, short desktop-only sub-headings at 60%, empty registers keep their action; top-band sub-navigation still owed to the user's spec
 - [Codebase guide per repo](codebase-guide-per-repo.md) — after studying a repo, write .claude/codebase-guide.md + CLAUDE.local.md pointer, gitignored
@@ -26,7 +27,7 @@
 - [No emoji in code or docs](no-emoji-in-code.md) — emoji banned everywhere committed; keep only deliberate UI glyphs (✓ ✕ ★ ✦)
 - [Portfolio Cloudinary cloud mismatch](portfolio-cloudinary-cloud-mismatch.md) — local .env uses dam0swaaq; older project images live on dnpvi7cyq
 - [Milestone start grounding](milestone-start-grounding.md) — re-issue the skills + rules block at the START of every build-plan level, never assume it carried over
-- [lfms-api suite flake](lfms-api-suite-flake.md) — one test file failed once in five runs (2026-09-06), unidentified; keep full gate logs, never pipe through tail
+- [lfms-api suite flake](lfms-api-suite-flake.md) — identified 2026-09-29: bill-rules "twenty bills posted at once" timed out under full-suite load; given 60s
 - [Concise responses](concise-responses.md) — short, lead with the result, no process narration or asides
 - [Seed follows every milestone](seed-follows-every-milestone.md) — a milestone adding models isn't done until the demo seed covers them
 - [Never stop between milestones](never-stop-between-milestones.md) — report and dispatch the next in the same turn; never end on an intention to dispatch
@@ -39,3 +40,17 @@
 - [LFMS handoff 2026-09-07](lfms-handoff-2026-09-07.md) — API M31 search and web W25 email filing were in flight in worktrees; next is web search screen, then 5.10/5.11, then Phase 6
 - [LFMS pause for UI spec](lfms-pause-for-ui-spec.md) — after Phase 5 completes, pause until the owner's screenshot-based UI reference exists; cite it in every web dispatch
 - [LFMS deploy migrates](lfms-deploy-migrates.md) — LFMS push runs migrations itself; preview runs without the worker on purpose (2026-09-27)
+- [Check the UI live](check-ui-live.md) — always check UI myself in the browser after every implementation, every width down to 344 (owner rule, 2026-09-28)
+- [LFMS handoff 2026-09-28](lfms-handoff-2026-09-28.md) — roles, courts, list search done on main 29 Sep; CPD/practising paging and budget screen open; next the offices and bank accounts spec talk
+- [Phone content first](phone-content-first.md) — fold record actions into one menu, no lone controls on empty phone rows, words over icons where room; fix in shared primitives (2026-09-28)
+- [Every list searchable](every-list-searchable.md) — LFMS: every list incl. detail pages has server search/filters; growing lists page on the server, fixed lists no pager; hierarchies rank-sorted; growing dropdowns are searched pickers
+- [Discuss before payments](lfms-discuss-before-payments.md) — LFMS Phase 11 is planned with the owner before any code
+- [LFMS fixes 2026-09-29](lfms-fixes-2026-09-29.md) — cumulative roles on own lines only, nested scopes, singletons in the DB, rail-first two-column records, one dialog per kind, facades for raw SQL
+- [Enterprise-complete, linked entities](enterprise-complete-linked-entities.md) — LFMS: full scope now, never "later"; every entity reference is a real navigable relationship, no "X ending 4567" text or fund/currency filter joins (2026-09-29)
+- [LFMS has no firm data](lfms-no-firm-data.md) — pre-launch; migrations may drop/rebuild; demo data disposable: wipe and reseed, fold unpushed migrations
+- [LFMS tab subheadings](lfms-tab-subheadings.md) — every tab opens on its PAGE_TAB_DESCRIPTIONS sentence, controls handed up beside it; never exempt a tab in tab-descriptions.test (29 Sep regression)
+- [LFMS handoff](lfms-handoff-2026-09-29-r1.md) — START HERE: build session by session per lfms-api docs/todo/SESSIONS.md; S0 = merge wave 1 (lane A merged 30 Sep, lane B pending)
+- [LFMS referrals 10B](lfms-referrals-10b.md) — referral rebuild is Phase 10B after R4, before Phase 11; rewards to lawyers only (2026-09-29)
+- [LFMS O2 owner review](lfms-o2-owner-review.md) — depth-not-breadth backlog in lfms-api docs/todo/spec-o2-owner-review.md (TODO O2); append new findings
+- [LFMS build on main](lfms-build-on-main.md) — from 30 Sep the lead and the Sonnet helper edit the main checkouts directly; no worktrees
+- [LFMS dev mail is logged](lfms-dev-mail-log.md) — MAIL_PROVIDER=log in dev so builds never spend the Resend limit; resend only when the owner asks
