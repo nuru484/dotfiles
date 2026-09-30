@@ -11,13 +11,18 @@ command=$(jq -r '.tool_input.command // ""' <<<"$input")
 grep -qE '(^|[;&|] *)git( -C [^ ]+)? commit\b' <<<"$command" || exit 0
 
 dir=$(jq -r '.cwd // ""' <<<"$input")
-cd_to=$(grep -oE '(^|[;&|] *)cd +[^ ;&|]+' <<<"$command" | tail -1 | sed -E 's/.*cd +//' || true)
+# The directory the commit runs in: the last cd before the commit, not after.
+before=${command%%git commit*}
+before=${before%%git -C * commit*}
+cd_to=$(grep -oE '(^|[;&|] *)cd +[^ ;&|]+' <<<"$before" | tail -1 | sed -E 's/.*cd +//' || true)
 c_to=$(grep -oE 'git -C [^ ]+ commit' <<<"$command" | tail -1 | awk '{print $3}' || true)
 for next in "$cd_to" "$c_to"; do
   [ -z "$next" ] && continue
   case $next in /*) dir=$next ;; ~*) dir="$HOME${next#\~}" ;; *) dir="$dir/$next" ;; esac
 done
 git -C "$dir" rev-parse --git-dir >/dev/null 2>&1 || exit 0
+# A merge brings files already committed, and gated, on their own branch.
+git -C "$dir" rev-parse -q --verify MERGE_HEAD >/dev/null && exit 0
 
 added=$(git -C "$dir" diff --cached --name-only --diff-filter=A |
   grep -E '(^|/)src/.*\.usecase\.ts$|(^|/)src/components/.*\.tsx$' |
