@@ -13,12 +13,12 @@
     "vercel-react-best-practices": "off"
   },
   "enabledPlugins": {
-    "vercel@claude-plugins-official": true,
+    "vercel@claude-plugins-official": false,
     "security-guidance@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": false,
-    "frontend-design@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": false,
     "claude-mem@thedotmack": true,
-    "claude-code-setup@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": false,
     "ponytail@ponytail": true
   },
   "extraKnownMarketplaces": {
