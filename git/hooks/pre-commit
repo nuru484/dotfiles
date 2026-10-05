@@ -8,4 +8,5 @@ if [ -n "$bad" ]; then
   echo "  Unstage them (git restore --staged <file>) or use --no-verify if intentional." >&2
   exit 1
 fi
-exec bash "$(dirname "$0")/quality-gate.sh"
+# The quality gate (lint, typecheck, tests) runs before a push, not on every
+# commit (pre-push), so commits stay fast.

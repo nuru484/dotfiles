@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Global guard before a push: the quality gate (lint, typecheck, tests) of a
+# Node repository runs here rather than on every commit.
+exec bash "$(dirname "$0")/quality-gate.sh"
