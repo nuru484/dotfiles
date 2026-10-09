@@ -76,7 +76,7 @@
 - [HP machine memory](hp-machine-memory.md) — native Ubuntu, 30 GiB real; 6 Oct OOM was my concurrent vitest (14 GB) + sweep-swollen next dev (6 GB), not hardware
 - [Skeletons follow content](skeletons-follow-content.md) — every layout change updates its skeleton to the new bespoke shape in the same commit (owner 6 Oct)
 - [UI corrections 6-7 Oct](lfms-ui-corrections-oct-6-7.md) — titles level with controls, sentence under every title, fold before drop, measure holds filters, no JSX // comments; fix in shared headers + run .hdrcheck sweep
-- [LFMS handoff 9 Oct](lfms-handoff-2026-10-09.md) — READ FIRST: everything pushed 9 Oct; NEXT is the rebrand of system and site + site fixes; S40 paused
+- [LFMS handoff 9 Oct](lfms-handoff-2026-10-09.md) — READ FIRST: everything pushed 9 Oct; NEXT: discuss and fix the 8-item owner agenda in it (file tiles, portal bell, profile icons, portal email 2FA, attachments before accept, dev SMS log, list rows system-wide, branding page), then the rebrand + site fixes; S40 paused
 - [Files open in viewer](files-open-in-viewer.md) — every file opens in the in-app viewer (fileOpener) before download; only "Download" actions save directly (7 Oct)
 - [Preferences are dropdown rows](preferences-dropdown-rows.md) — one row per preference with a select that applies at once; no radio cards or Edit/Save (7 Oct)
 - [Build without waiting](lfms-build-without-waiting.md) — from 8 Oct: start/finish milestones without asking; lead on Money depth, one helper on S27; production grade, careful UI
