@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-Owner is walking LFMS and listing broad-but-shallow features. Backlog: `lfms-api/docs/todo/spec-o2-owner-review.md` (TODO.md item O2): departments, document folders + folder access, self-service access requests, person page with matters/rates/staff no/office/department, virus-scan every upload, view-before-download for every file. Planned elsewhere: Phase 10B origination, 10C SMS by destination, Phase 11 payment provider facts.
+Owner is walking LFMS and listing broad-but-shallow features. Backlog: `lfms-api/docs/todo/spec-o2-owner-review.md` (placed in docs/ROADMAP.md: Small fixes owed and Later): departments, document folders + folder access, self-service access requests, person page with matters/rates/staff no/office/department, virus-scan every upload, view-before-download for every file. Planned elsewhere: Phase 10B origination, 10C SMS by destination, Phase 11 payment provider facts.
 
 **Why:** owner wants enterprise depth matching how law firms work, not prototypes.
 

@@ -1,6 +1,6 @@
 ---
 name: delegate-to-sonnet-with-full-specs
-description: "When the owner opts into subagents: Opus for build agents, Sonnet only for short fixes, at most two, fully decided briefs; I plan every decision and review after"
+description: "Owner, 30 Sep (S2 web): split each web/API session: lead builds the judgement-heavy part, ONE Sonnet helper builds the pattern-copy part from a full written spec in the scratchpad (files, examples to copy, every decision, guards to run, no commits); lead reviews its diff"
 metadata:
   node_type: memory
   type: feedback
@@ -13,3 +13,5 @@ Owner, 2026-09-29 (LFMS R1/R2): "use sub agents now, sonnet 5.5, very very detai
 **Why:** Sonnet executes well but does not reason as broadly; leaving design choices to it produces drift. Parallel agents were also the reason earlier milestones went faster than single-session retrofit work.
 
 **How to apply:** only once the owner has opted in (default stays [[no-subagents-by-default]]). Brief = exact files, schemas, endpoints, field names, copy, component to copy from, tests to write, commands to run, what not to touch, and the done check. Give each agent its own worktree/branch; never two agents running `next dev` at once (WSL OOM, see [[khadys-dev-testing-notes]]). Review the diff and re-run its checks before merging.
+
+**Update 30 Sep 2026 (owner):** asked for exactly this again to save tokens, since Sonnet and Codex drift without decisions made for them. Worked on S2 web: the helper built Settings → Intake from `scratchpad/s2-settings-spec.md` while the lead built the workspace; nav, descriptions and shared files were done by the lead first so the two never touched the same file. The spec must name the guard tests (placeholders, dialog-width, permission-guard, record-links) because they are what a helper misses.

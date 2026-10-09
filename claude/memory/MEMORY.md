@@ -1,6 +1,6 @@
 # Memory Index
 
-- [Commit attribution preference](commit-no-ai-attribution.md) — no AI/co-author in commits or PRs; on LFMS commit each green chunk without asking; push only when asked
+- [Commit attribution preference](commit-no-ai-attribution.md) — no AI/co-author in commits or PRs; LFMS: commit each green chunk and PUSH each finished feature/session (2 Oct); elsewhere push only when asked
 - [No shadows unless explicit](no-shadows-unless-explicit.md) — don't add box-shadows to UI unless the user asks
 - [Prod DB is neondb](prod-db-is-neondb.md) — dms-backend production DB is Neon "neondb", not "dms_test"; migrate that one
 - [Madrasa pages max-width](madrasa-pages-max-width.md) — madrasa dashboard tables/detail views use container mx-auto (+ max-w-7xl on detail), not full-width
@@ -19,7 +19,7 @@
 - [AgriTrade cash-book deploy](agritrade-cash-book-deploy.md) — prod migrated through one_held_pot_per_tender + both mains pushed 2026-08-16; user still to classify expense categories, reclassify suspense/till
 - [LFMS graphify graphs](lfms-graphify-graphs.md) — graphify-out in lfms-api, lfms-web and merged ~/repos/lfms-graph (built 2026-09-04); refresh with graphify update + merge-graphs
 - [No subagents by default](no-subagents-by-default.md) — never spawn subagents unless explicitly asked; unnumbered ask = one; also in global CLAUDE.md (2026-09-27)
-- [Delegate to Sonnet with full specs](delegate-to-sonnet-with-full-specs.md) — superseded 30 Sep: lead builds directly, one Sonnet helper for mechanical work, see lfms-build-on-main
+- [Delegate to Sonnet with full specs](delegate-to-sonnet-with-full-specs.md) — owner-approved 30 Sep: lead builds the judgement part, one Sonnet helper builds the pattern part from a full scratchpad spec; lead reviews
 - [Mobile keyboard safe overlays](mobile-keyboard-safe-overlays.md) — sheets, drawers and modals with inputs must stay clear of the phone keyboard; fix at the overlay primitive (viewport meta, visualViewport inset, reveal on focus)
 - [LFMS UI structure principles](lfms-ui-structure-principles.md) — sidebar is the work only, settings area with grouped menu, account in user menu, tabs on routes, short desktop-only sub-headings at 60%, empty registers keep their action; top-band sub-navigation still owed to the user's spec
 - [Codebase guide per repo](codebase-guide-per-repo.md) — after studying a repo, write .claude/codebase-guide.md + CLAUDE.local.md pointer, gitignored
@@ -28,29 +28,63 @@
 - [Portfolio Cloudinary cloud mismatch](portfolio-cloudinary-cloud-mismatch.md) — local .env uses dam0swaaq; older project images live on dnpvi7cyq
 - [Milestone start grounding](milestone-start-grounding.md) — re-issue the skills + rules block at the START of every build-plan level, never assume it carried over
 - [lfms-api suite flake](lfms-api-suite-flake.md) — identified 2026-09-29: bill-rules "twenty bills posted at once" timed out under full-suite load; given 60s
-- [Concise responses](concise-responses.md) — short, lead with the result, no process narration or asides
-- [Seed follows every milestone](seed-follows-every-milestone.md) — a milestone adding models isn't done until the demo seed covers them
-- [Never stop between milestones](never-stop-between-milestones.md) — report and dispatch the next in the same turn; never end on an intention to dispatch
-- [Run targeted tests](run-targeted-tests.md) — only the tests around what changed while iterating; full gate at the end
-- [LFMS layout corrections](lfms-layout-corrections.md) — form/field/heading rules the owner fixed by hand; they live in lfms-web/CLAUDE.md
+- [Answer and keep building](answer-and-keep-building.md) — status questions get a short answer then building continues in the same turn; open design calls decided like Clio and peers, not asked (3 Oct)
+- [Demo seed paused](seed-follows-every-milestone.md) — from S8 no per-session demo seed; walk makes its own records via API; Desktop log lists items for the owner to create; one demo pass at the end (2 Oct)
+- [Run targeted tests](run-targeted-tests.md) — targeted tests only while building; full gates (lint+suites+build) ONCE at the end of a back-to-back run (owner 2 Oct)
+- [LFMS layout corrections](lfms-layout-corrections.md) — form/field/heading rules the owner fixed by hand; they live in lfms-web/docs/LAYOUT-RULES.md
 - [Fix the class, not the instance](fix-the-class-not-the-instance.md) — sweep for every occurrence of a reported fault; don't wait to be told each one
-- [LFMS register endpoint gaps](lfms-register-endpoint-gaps.md) — four gaps closed by M30 on 2026-09-07; originals stale-days figure still read from settings
-- [LFMS worktree UI pass](lfms-worktree-ui-pass.md) — main checkouts stay on main for the owner's UI fixes; milestone agents work in .claude/worktrees on feature branches and merge back (2026-09-07)
 - [LFMS: the law is data](lfms-law-is-data.md) — legal, tax and regulatory rules are firm-configurable settings with cited defaults, never code; every such milestone ships its settings screen (2026-09-07)
-- [LFMS handoff 2026-09-07](lfms-handoff-2026-09-07.md) — API M31 search and web W25 email filing were in flight in worktrees; next is web search screen, then 5.10/5.11, then Phase 6
-- [LFMS pause for UI spec](lfms-pause-for-ui-spec.md) — after Phase 5 completes, pause until the owner's screenshot-based UI reference exists; cite it in every web dispatch
 - [LFMS deploy migrates](lfms-deploy-migrates.md) — LFMS push runs migrations itself; preview runs without the worker on purpose (2026-09-27)
 - [Check the UI live](check-ui-live.md) — always check UI myself in the browser after every implementation, every width down to 344 (owner rule, 2026-09-28)
-- [LFMS handoff 2026-09-28](lfms-handoff-2026-09-28.md) — roles, courts, list search done on main 29 Sep; CPD/practising paging and budget screen open; next the offices and bank accounts spec talk
 - [Phone content first](phone-content-first.md) — fold record actions into one menu, no lone controls on empty phone rows, words over icons where room; fix in shared primitives (2026-09-28)
-- [Every list searchable](every-list-searchable.md) — LFMS: every list incl. detail pages has server search/filters; growing lists page on the server, fixed lists no pager; hierarchies rank-sorted; growing dropdowns are searched pickers
-- [Discuss before payments](lfms-discuss-before-payments.md) — LFMS Phase 11 is planned with the owner before any code
+- [Every list searchable](every-list-searchable.md) — EVERY list incl. 10-row lists, reports, detail-page lists: search always, filters and sort where they fit; no NO_SEARCH exemptions for new lists; pager only on growing lists past the threshold (reaffirmed 30 Sep)
 - [LFMS fixes 2026-09-29](lfms-fixes-2026-09-29.md) — cumulative roles on own lines only, nested scopes, singletons in the DB, rail-first two-column records, one dialog per kind, facades for raw SQL
 - [Enterprise-complete, linked entities](enterprise-complete-linked-entities.md) — LFMS: full scope now, never "later"; every entity reference is a real navigable relationship, no "X ending 4567" text or fund/currency filter joins (2026-09-29)
 - [LFMS has no firm data](lfms-no-firm-data.md) — pre-launch; migrations may drop/rebuild; demo data disposable: wipe and reseed, fold unpushed migrations
 - [LFMS tab subheadings](lfms-tab-subheadings.md) — every tab opens on its PAGE_TAB_DESCRIPTIONS sentence, controls handed up beside it; never exempt a tab in tab-descriptions.test (29 Sep regression)
-- [LFMS handoff](lfms-handoff-2026-09-29-r1.md) — START HERE: build session by session per lfms-api docs/todo/SESSIONS.md; S0 = merge wave 1 (lane A merged 30 Sep, lane B pending)
-- [LFMS referrals 10B](lfms-referrals-10b.md) — referral rebuild is Phase 10B after R4, before Phase 11; rewards to lawyers only (2026-09-29)
+- [Discuss before each session](discuss-before-each-session.md) — LFMS: brief the owner and agree scope before building any step/session; overrides never-stop (3 Oct)
+- [Module-by-module build mode](lfms-main-features-build-mode.md) — discuss each module (scope, UI on existing patterns, enterprise depth), build, push, then discuss the next; full suites only at module end (3 Oct)
+- [LFMS reports incomplete](lfms-reports-incomplete.md) — owner (4 Oct): reports not complete by their measure; joint fix-all pass owed later, not unasked
+- [LFMS roadmap is the only tracker](lfms-roadmap-only-tracker.md) — READ lfms-api/docs/ROADMAP.md FIRST; specs only after discussion (docs/specs), background inputs (docs/background), old docs at tag archive/plans-2026-10-05 (owner 5 Oct)
+- [LFMS dev walk traps](lfms-dev-walk-traps.md) — walk session minting, SSO mode, playwright path, .next/types, commit hook limits, test clocks
+- [Codex lane owns sessions](codex-lane-owns-sessions.md) — NEVER build S18/S12/S20/S21/S22 on main until the owner hands them back; review each finished one to my standard, fix or send back
+- [LFMS referrals 10B](lfms-referrals-10b.md) — real-firm model: origination credit read at comp review, outside lawyers by consented fee share, non-lawyers thanked (capped gift register) never paid; benchmark owner ideas, never write them in verbatim (2 Oct)
 - [LFMS O2 owner review](lfms-o2-owner-review.md) — depth-not-breadth backlog in lfms-api docs/todo/spec-o2-owner-review.md (TODO O2); append new findings
 - [LFMS build on main](lfms-build-on-main.md) — from 30 Sep the lead and the Sonnet helper edit the main checkouts directly; no worktrees
 - [LFMS dev mail is logged](lfms-dev-mail-log.md) — MAIL_PROVIDER=log in dev so builds never spend the Resend limit; resend only when the owner asks
+- [Width follows the information](width-follows-information-architecture.md) — key-value sections never full width (600-800px rows); registers 2304px, record pages held to 1360px on any screen (owner 4 Oct)
+- [Jump to in the header row](jump-to-in-header-row.md) — ghost dropdown left of the actions icon, sticky bar on scroll tracking the section in view; shared component; role matrix row is the exception
+- [Enterprise: workflow then logic](enterprise-workflow-logic-first.md) — judge every build by the firm's workflow, then state-change logic (preconditions, dependents, reason, audit); raise flaws unasked (owner 30 Sep)
+- [Details are read-only views](detail-views-not-forms.md) — forms only after Edit; rich records get a page not a dialog; truncating rows get a details dialog (owner 30 Sep)
+- [Reorder by drag and click](reorder-by-drag-and-click.md) — every Move up/down list also drags, like workflow steps (owner 30 Sep)
+- [Export asks first](export-asks-first.md) — every export opens a confirmation modal before downloading (owner 30 Sep)
+- [Narrow tables for few columns](narrow-tables-few-columns.md) — a table of a few short columns reads at RECORD_MEASURE (max-w-3xl), not full width (owner 1 Oct)
+- [Dev DB reset is allowed](lfms-dev-db-reset-ok.md) — owner OK to reset/clear local LFMS dev DB any time; pass their quote to Prisma consent env
+- [Session log on Desktop](session-log-on-desktop.md) — after every finished session append what was built + new screens to ~/Desktop/Dangana build log.docx (script in ~/.local/share/lfms-notes-venv)
+- [Lists: controls in one place](lists-controls-one-place.md) — record-page lists keep controls inside the card, workspace registers above; no filters on empty lists; no duplicate registers (1 Oct)
+- [Speed without subagents](speed-without-subagents.md) — one sign-in per walk (saved state), one background full gate per session, one walk at the end, terse status, keep Codex lane full (owner 1 Oct)
+- [Search row or subheading](controls-search-row-or-subheading.md) — one control size in headings and toolbars; tabs never repeat their name; zone/locale are dropdowns; search present: buttons/filters on the search row (tooltip labels); else beside subheading; subheadings ≤2 lines; sub-tab sentence under sub-tabs (1 Oct)
+- [Heavy checks: one at a time](one-heavy-check-at-a-time.md) — heavy-check ONE slot shared with Codex; API suite 6 workers when alone; tests always run locally before push (owner 5 Oct)
+- [Codex briefs fully decided](codex-briefs-fully-decided.md) — every lane brief: decisions, API, screens (file to copy, routes, phone, do-nots); Codex only implements; keep the lane full (2 Oct)
+- [Mail and documents IA](lfms-mail-and-documents-ia.md) — one Mail workspace; Documents = Mail-shaped workspace, Clio-like rail + in-place viewer with tabbed panel; S23+S24+S28 one restructure (owner 2-3 Oct)
+- [Opus lane: conveyancing](opus-lane-conveyancing.md) — second Opus builds P14.1 in worktrees/conveyancing branch p14-conveyancing; resume from docs/todo/reports/p14-conveyancing-handoff.md there; lead reviews+merges
+- [API before web](lfms-api-before-web.md) — LFMS: finish every API sub-phase of a module before any web (owner 5 Oct)
+- [Demo seed after payments](demo-seed-after-payments.md) — payments demo seeded + walked 5 Oct; other features' demo ON HOLD; discuss the next item first
+- [CI is manual](lfms-ci-on-push.md) — api/web CI by hand only to save minutes (5 Oct); local full gate before every push, read its EXIT; web shard flake unproven
+- [Codex sessions discussed first](codex-sessions-discussed-first.md) — S19 vs S29 discussed with owner before brief; AP decisions taken (matter line -> disbursement; petty cash/MoMo under a limit)
+- [No icons on figure tiles](no-icons-on-figure-tiles.md) — never icons on stat tiles/cards anywhere; re-layout only what was asked, keep sections in their cards (owner 6 Oct)
+- [HP machine memory](hp-machine-memory.md) — native Ubuntu, 30 GiB real; 6 Oct OOM was my concurrent vitest (14 GB) + sweep-swollen next dev (6 GB), not hardware
+- [Skeletons follow content](skeletons-follow-content.md) — every layout change updates its skeleton to the new bespoke shape in the same commit (owner 6 Oct)
+- [UI corrections 6-7 Oct](lfms-ui-corrections-oct-6-7.md) — titles level with controls, sentence under every title, fold before drop, measure holds filters, no JSX // comments; fix in shared headers + run .hdrcheck sweep
+- [LFMS handoff 9 Oct](lfms-handoff-2026-10-09.md) — READ FIRST: S39, auth pages, C3-C5 pushed 9 Oct; S40 paused until the owner says; Codex on P14.2 then P10C
+- [Files open in viewer](files-open-in-viewer.md) — every file opens in the in-app viewer (fileOpener) before download; only "Download" actions save directly (7 Oct)
+- [Preferences are dropdown rows](preferences-dropdown-rows.md) — one row per preference with a select that applies at once; no radio cards or Edit/Save (7 Oct)
+- [Build without waiting](lfms-build-without-waiting.md) — from 8 Oct: start/finish milestones without asking; lead on Money depth, one helper on S27; production grade, careful UI
+- [Detail list rows](detail-list-rows.md) — name+status line 1, description (+who/when) line 2; no icons/file counts; table vs list by truncation; every titled section a one-line 5+ word sentence (8-9 Oct)
+- [Section heading sentences](section-heading-sentences.md) — titled section: sentence one line; tab-named section: two lines; fixed min gap to controls (8 Oct)
+- [Portal reuses the console kit](portal-reuses-console-kit.md) — portal screens copy console patterns: photo, theme, sign-out confirm, measures, list rows (8 Oct)
+- [Page parts share a measure](page-parts-share-measure.md) — header buttons, tiles and lists end at one edge; messages at a measure with Show more; files as tiles; remove = X + tooltip (8 Oct)
+- [Discuss spec before handover](discuss-spec-before-handover.md) — brief the owner on any helper spec and agree it before handing over; S27 slipped (8 Oct)
+- [Speed at a firm's size](lfms-speed-at-firm-size.md) — perf judged at 500 people/50k matters; budgets, flat query counts, counts in SQL; rules in lfms-api CLAUDE.md (8 Oct)
+
+- [Token economy](token-economy.md) — owner 9 Oct: one session per milestone; screenshots of changed areas at 1536/768/375/344; routine work to one Sonnet helper; claude-mem on Gemini, search hook off

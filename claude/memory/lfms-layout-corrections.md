@@ -1,6 +1,6 @@
 ---
 name: lfms-layout-corrections
-description: "Layout mistakes the LFMS owner corrected by hand; they are written into lfms-web/CLAUDE.md and must not recur"
+description: "Layout mistakes the LFMS owner corrected by hand; they are written into lfms-web/docs/LAYOUT-RULES.md and must not recur"
 metadata:
   node_type: memory
   type: feedback
@@ -9,7 +9,7 @@ metadata:
 On 2026-09-06 and 2026-09-07 the LFMS owner reviewed real screens and
 corrected a set of layout faults, several of which they said should have been
 reasoned out rather than shipped. They are recorded in
-`~/repos/lfms-web/CLAUDE.md` under "Layout rules the owner has already
+`~/repos/lfms-web/docs/LAYOUT-RULES.md` (moved from CLAUDE.md 9 Oct) under "Layout rules the owner has already
 corrected once", so any agent reading that file gets them.
 
 The one they were most direct about: **every input in a form column is the
@@ -26,7 +26,7 @@ the repo's date component and never the browser's.
 not repeat them, and said plainly they did not understand why the equal-width
 rule had not been reasoned through in the first place.
 
-**How to apply:** read that CLAUDE.md section before any UI work in lfms-web,
+**How to apply:** read docs/LAYOUT-RULES.md before any UI work in lfms-web,
 and add to it rather than to a memory file when a new rule is settled, so it
 reaches subagents that never see this store. See [[concise-responses]] and
 [[run-targeted-tests]] for how the same owner wants the work reported.

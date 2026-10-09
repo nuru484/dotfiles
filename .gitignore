@@ -4,3 +4,4 @@
 # The global ignore (~/.config/git/ignore) excludes CLAUDE.md everywhere so it
 # stays out of project repos. Here it is the payload, so opt back in.
 !claude/CLAUDE.md
+__pycache__/

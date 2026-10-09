@@ -38,3 +38,5 @@ for it on every list including detail pages.
 (query params) and the screen together; test the server narrowing.
 Related: [[phone-content-first]], [[fix-the-class-not-the-instance]],
 [[lfms-fixes-2026-09-29]].
+
+**Reaffirmed 30 Sep 2026 (owner, after S3 shipped lists and reports without search):** EVERY list has search, even one of 10 rows, including reports and lists under a record; filters where it has anything to filter by; sorting where it has an order. No `NO_SEARCH` exemption is an answer to a new list: add the server search instead (the S3 session wrongly exempted intake consultations/proposals and had to undo it). Pagination only for growing lists, and the pager shows only past the system's established threshold.

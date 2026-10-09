@@ -16,4 +16,4 @@ Match the repo's existing commit style (`feat(scope): sentence` on LFMS); stage 
 
 **Why:** the user owns the work; tooling credit doesn't belong in their history. Small commits give them a cheap rollback point for each experiment.
 
-**How to apply:** write the message in the user's voice with zero AI references, commit at each green checkpoint on LFMS, and push only on request. See the [[git-workflow]] skill and [[no-subagents-by-default]].
+**How to apply:** write the message in the user's voice with zero AI references, commit at each green checkpoint on LFMS. LFMS (owner, 2 Oct 2026): push api, web and site as each feature or session finishes ("be pushing as you finish features"); elsewhere push only on request. See the [[git-workflow]] skill and [[no-subagents-by-default]].

@@ -17,3 +17,5 @@ one-file change.
 
 **How to apply:** name the specific test files. Run the full gate once, at the
 end, and say plainly that it is the full run when reporting it.
+
+**Owner, 2 Oct 2026:** "only targeted tests; full suites, including linting and all, once at the end of building". When sessions run back to back (S10, S11, Step 3...), the full gates (lint, typecheck, full suites, build) run ONCE at the end of the building run, not per session. Commit each session after its targeted tests are green. No seed code ([[seed-follows-every-milestone]]).

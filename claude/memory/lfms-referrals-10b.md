@@ -1,15 +1,18 @@
 ---
 name: lfms-referrals-10b
-description: "LFMS referral engine rebuild is Phase 10B, after 10A R4 and before Phase 11; referral rewards go to lawyers only (owner, 2026-09-29)"
+description: "LFMS Phase 10B referrals follow real firm practice (Clio/Aderant/Elite + L.I. 2423): origination credit feeds comp review, outside lawyers by consented fee share, non-lawyers thanked (gift register, capped) never paid"
 metadata:
-  node_type: memory
   type: project
-  originSessionId: 5e61fdba-c5a5-4eb8-97de-16356b1e1890
-  modified: 2026-09-29T16:01:14.618Z
 ---
 
-Owner found the referral engine thin on 2026-09-29 (sources list + referrer party on the matter only). Decided: rebuild as **Phase 10B Origination and client acquisition** (origination/responsible/working credit with splits and approval, sources and referrers enquiry→client→matter, codes, fee sharing with outside lawyers, compensation reads, acquisition reports) in lfms-api `docs/BUILD-PLAN.md`, scheduled after 10A R4, before Phase 11 payments. **Rewards go only to lawyers** (firm's own lawyers as staff incentives; outside lawyers where fee sharing between lawyers is allowed), never clients or other non-lawyers; the L.I. 2423 restriction is a firm setting with a cited default, marked LEGAL-VERIFY.
+The referral rebuild is **Phase 10B Origination and client acquisition**. It comes after 10A R4 and before Phase 11. The spec is in lfms-api `docs/BUILD-PLAN.md` Phase 10B (rewritten 2 Oct 2026).
 
-**Why:** Ghana's conduct rules restrict paying non-lawyers for introducing clients; staff referrers need R2's people records; rewards are paid from collected fees.
+The model, benchmarked on Clio Manage/Grow, Aderant, Elite 3E and L.I. 2423:
+- The firm's own lawyers are never paid per client. They hold origination credit (splits, approval), which is read at partner compensation and annual review. An optional associate business-development bonus formula is off by default and computed only at review.
+- Outside lawyers are paid by fee sharing with the client's written consent.
+- Clients and other non-lawyers are recorded as referrers and thanked: a letter, a task, a nominal gift in a gift register with firm caps. They are never paid. Reciprocal referral relationships are recorded and the client is told.
+- The settings carry the rule with its citation (LEGAL-VERIFY). No setting allows paying a non-lawyer.
 
-**How to apply:** do not start Phase 11 before 10B is done; the eligibility rule is enforced in use case and database, not only UI. Related: [[lfms-discuss-before-payments]], [[enterprise-complete-linked-entities]].
+**Why:** the owner, 2 Oct 2026: "it's not about what I wrote, it's about what's being done in real law firms ... enterprise systems like Clio ... whiles still meeting the ghanaian legal context". Their earlier ask, a reward engine for non-lawyers, was rolled back because the industry doesn't do it and Ghana's rules forbid it.
+
+**How to apply:** build 10B to this, and do not start Phase 11 before 10B. In general, benchmark the owner's domain suggestions against industry practice and say where they differ, rather than writing them in verbatim (see [[enterprise-workflow-logic-first]]).
