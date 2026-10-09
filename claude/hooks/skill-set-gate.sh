@@ -33,7 +33,7 @@ esac
 
 # Agent config, dependency and build output never count as work on a side;
 # a repository worktree under .claude/worktrees is work like any checkout.
-grep -qE '/(\.claude|dotfiles|node_modules|\.next|dist)/' <<<"${target//\/.claude\/worktrees\//\/worktrees\/}" && exit 0
+grep -qE '/(\.claude|dotfiles|node_modules|\.next|dist|lane)/'<<<"${target//\/.claude\/worktrees\//\/worktrees\/}" && exit 0
 
 if grep -qE '(\.(tsx|jsx|css|scss|mdx)\b|/[^/ ]*(-web|-site|frontend)[^/ ]*/)' <<<"$target"; then
   side=web; required=$WEB
@@ -60,6 +60,16 @@ for skill in $required; do
   seen "\"name\":\"Skill\",\"input\":{\"skill\":\"$skill\"" || missing+=("$skill")
 done
 
+# The side's digest (the set's rules in one page, owner 30 September 2026,
+# to save tokens) stands for the whole set once it has been read; a full
+# skill is then loaded only for the concern a change turns on.
+digest_side=api
+[ "$side" = web ] && digest_side=web
+digest="$HOME/.config/dotfiles-agent-instructions/skill-digest-$digest_side.md"
+if [ -f "$digest" ] && seen "skill-digest-$digest_side.md"; then
+  missing=()
+fi
+
 # The owner's engineering preferences are read before the first edit on any side.
 unread=()
 seen "dotfiles-agent-instructions/engineering.md" || seen "dotfiles/instructions/engineering.md" ||
@@ -83,7 +93,7 @@ if [ "$side" = web ]; then
     dir=$(dirname "$dir")
   done
   if [ -n "$root" ] && [ "$probe" != "$root/docs/PATTERNS.md" ]; then
-    for doc in PATTERNS.md DESIGN-RULES.md; do
+    for doc in PATTERNS.md DESIGN-RULES.md LAYOUT-RULES.md; do
       # A worktree's catalogue is its main checkout's; either reading counts.
       main=${root%%/.claude/worktrees/*}
       if ! seen "\"file_path\":\"$root/docs/$doc\"" && ! seen "\"file_path\":\"$main/docs/$doc\""; then

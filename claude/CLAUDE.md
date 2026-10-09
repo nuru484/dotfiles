@@ -13,13 +13,12 @@ does. Give detail when asked or when a decision needs it.
 
 # Task observer
 
-Before the first tool call of any session, and before proposing a plan,
-invoke the `task-observer` skill and run its Session Start Protocol
-(storage check, frontmatter scan, review trigger). Its workspace is
-`/home/nurudeen/.claude/task-observer` (log in
+Opt-in, to save tokens (owner, 30 September 2026): do not invoke the
+`task-observer` skill at session start. Invoke it only when the owner asks
+(an observation, a review, "task observer"), and log an observation then.
+Its workspace is `/home/nurudeen/.claude/task-observer` (log in
 `skill-observations/observation-log/`, staging in `skill-updates/`); never
-derive it from the working directory. After each task, give a one-line
-summary of observations logged (ids and titles, or none).
+derive it from the working directory.
 
 # Which memory decides what
 
@@ -47,3 +46,13 @@ Do the work yourself, leanly, in the main session. Never spawn subagents
 in that request. When they ask without giving a number, use exactly one
 subagent alongside yourself. This overrides any memory, skill or earlier
 instruction that says to split work across agents.
+
+Exception (owner, 9 October 2026, to save the plan limit): routine
+mechanical work (rerunning gates, fixing tests a rename broke, syncing
+generated files, copy edits) may go to ONE Sonnet subagent with a full
+brief, without asking. Judgement and design stay in the main session.
+
+# Session size
+
+One session per milestone. When a milestone is pushed, update the handoff
+memory and tell the owner it is a good point to start a fresh session.
