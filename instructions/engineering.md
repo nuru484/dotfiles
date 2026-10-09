@@ -8,9 +8,11 @@ precedence over personal defaults; domain-specific conventions take precedence
 over vendored examples. Preserve licenses and legally required attribution.
 
 Skills load by side of the stack. Before the first edit on a side in a
-session, load that side's whole set once. The set is the owner's standing rule
-and outranks any single skill's description; the size of the edit does not
-shrink it.
+session, read that side's digest once (`skill-digest-api.md`,
+`skill-digest-web.md` beside this file): it carries the whole set's rules in
+one page and satisfies the gate (owner, 30 September 2026, to save tokens).
+Where a side has no digest yet, load its whole set once and write the digest
+from it. Load a full skill only when a change turns on its concern.
 
 - Web (Next.js app or site, any page, component, form, slice or style):
   frontend-conventions, mobile-first-ui, api-contracts, design-taste,
